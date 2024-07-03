@@ -40,7 +40,7 @@ def show_frame (img, scale_factor=.5):
     # Display
     cv2.imshow ("Detection", img)
 
-    if cv2.waitKey (20) & 0xFF == ord("q"):
+    if cv2.waitKey (2) & 0xFF == ord("q"):
         cv2.destroyAllWindows()
         return True
     return False
