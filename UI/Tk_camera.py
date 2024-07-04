@@ -41,7 +41,7 @@ channel_combo.pack (side='top')
 
 # Detection toggle button 
 toggle_var = ctk.BooleanVar (value=False)
-detection_toggle = ctk.CTkSwitch(camera_frame, text='Toggle people detection', variable=toggle_var) # style='info.Roundtoggle.Toolbutton'
+detection_toggle = ctk.CTkSwitch(camera_frame, text='Enable people detection', variable=toggle_var) # style='info.Roundtoggle.Toolbutton'
 detection_toggle.pack (side='top', pady=10)
   
 
