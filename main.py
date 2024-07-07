@@ -1,7 +1,7 @@
 import cv2
-from cam_functions import setup_output_stream, show_frame, get_vcap
+from utils.cam_functions import setup_output_stream, show_frame, get_vcap
+from utils.yolo_api import detect, load_model
 from db.db_manager import insert_record
-from yolo_api import detect, load_model
 
 def app ():
     vcap = get_vcap(channel=3)
