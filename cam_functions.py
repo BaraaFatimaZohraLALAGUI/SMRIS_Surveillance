@@ -39,7 +39,7 @@ def setup_output_stream(vcap):
     output_vid_path = os.path.join('captures_out2', 'output.mp4')
     out_cap = cv2.VideoWriter(output_vid_path, cv2.VideoWriter_fourcc(*'mp4v'), 30, (w, h))
 
-    return out_cap
+    return out_cap, output_vid_path
 
 def get_vcap (channel):
     IP = "10.1.67.111"

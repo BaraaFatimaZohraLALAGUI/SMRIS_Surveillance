@@ -2,12 +2,8 @@ import tkinter as tk
 import ttkbootstrap as ttk
 import cv2 
 from PIL import Image, ImageTk 
-# from ultralytics import YOLO
 from cam_functions import get_vcap, setup_output_stream
 from yolo_api import detect, load_model
-
-### initial setup
-# Get the four video captures
 
 FRAME_SCALE = .3
 RECT_COLOR = (255, 255, 0)
@@ -55,7 +51,7 @@ def combo_select (channel):
 def open_camera(): 
 
     model = load_model()
-    out_cap = setup_output_stream(vcap)
+    out_cap, path = setup_output_stream(vcap)
 
     ret, frame = vcap.read() 
     display_frame = None
