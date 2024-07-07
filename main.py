@@ -1,6 +1,6 @@
 import cv2
 from cam_functions import setup_output_stream, show_frame, get_vcap
-from db_manager import insert_record
+from db.db_manager import insert_record
 from yolo_api import detect, load_model
 
 def app ():
