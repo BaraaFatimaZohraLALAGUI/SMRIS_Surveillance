@@ -1,51 +1,54 @@
-import customtkinter as ctk
+import tkinter as tk
+import ttkbootstrap as ttk
 import cv2 
-from PIL import Image 
+from PIL import Image, ImageTk 
 from ultralytics import YOLO
 from cam_capture import get_vcap
 
 ### initial setup
+# Get the four video captures
+caps = [get_vcap (channel = 1), get_vcap (channel = 2), get_vcap (channel = 3), get_vcap (channel = 4)]
 
 # Load YOLO model 
-model = YOLO ('models\\yolov10n.pt') 
+model = YOLO ('models\\yolov10s.pt') 
 
 FRAME_SCALE = .3
-FRAME_WIDTH, FRAME_HEIGHT = (640, 480) 
-FRAME_SIZE = (FRAME_WIDTH, FRAME_HEIGHT)
 RECT_COLOR = (255, 255, 0)
+
+width, height = 800, 600
   
-app = ctk.CTk () 
-app.title ("SMRIS AI Surveillance")
-# app.state('zoomed')
-app._state_before_windows_set_titlebar_color = 'zoomed'
+app = ttk.Window (themename='darkly') 
+app.state('zoomed')
   
 # Bind the app with Escape keyboard to quit app whenever pressed 
 app.bind('<Escape>', lambda e: app.quit()) 
 
 
 ### CAMERA FRAME
-camera_frame = ctk.CTkFrame (app) # text="Camera Feed", font= ('Calibri 14 bold')
+camera_frame = tk.LabelFrame (app, text="Camera Feed", font= ('Calibri 14 bold'))
 camera_frame.pack (side='left', expand=True, fill='y', pady=20, ipady=20)
 
 # Channel combobox 
-channel_var = ctk.StringVar (value="1")
-channel_combo = ctk.CTkComboBox (camera_frame, values=['1', '2', '3', '4'], variable=channel_var, command = lambda event: combo_select (int (channel_var.get ())))
+channel_var = tk.IntVar (value=1)
+channel_combo = ttk.Combobox (camera_frame, values=[1, 2, 3, 4], textvariable=channel_var)
 
-channel_label = ctk.CTkLabel (camera_frame, text='Channel ' + channel_var.get (), font=('Calibri', 24, 'bold')) 
+channel_label = ttk.Label (camera_frame, text='Channel ' + str (channel_var.get ()), font='Calibri 18 bold') 
 channel_label.pack (side='top')
 
+channel_combo.bind ('<<ComboboxSelected>>', lambda event: combo_select (channel_var.get ()))
+
 # Create a label and display it on app 
-cam_label = ctk.CTkLabel (camera_frame, text='') 
+cam_label = ttk.Label(camera_frame, width=100) 
 cam_label.pack(expand=False, fill='x', pady=10, padx=10, side='top') 
 channel_combo.pack (side='top')
 
 # Detection toggle button 
-toggle_var = ctk.BooleanVar (value=False)
-detection_toggle = ctk.CTkSwitch(camera_frame, text='Enable people detection', variable=toggle_var) # style='info.Roundtoggle.Toolbutton'
+toggle_var = tk.BooleanVar (value=False)
+detection_toggle = ttk.Checkbutton(camera_frame, text='Toggle people detection', style='info.Roundtoggle.Toolbutton', variable=toggle_var)
 detection_toggle.pack (side='top', pady=10)
   
 
-vcap = get_vcap (channel = int (channel_var.get ()))
+vcap = get_vcap (channel = channel_var.get ())
 
 def combo_select (channel): 
     global vcap
@@ -55,10 +58,11 @@ def combo_select (channel):
 
 def open_camera(): 
 
+    # ret, frame = caps[channel_var.get () - 1].read() 
     ret, frame = vcap.read() 
     display_frame = None
     if ret:
-        frame = cv2.resize(frame, FRAME_SIZE) # fx = FRAME_SCALE, fy = FRAME_SCALE
+        frame = cv2.resize(frame, (640, 480)) # fx = FRAME_SCALE, fy = FRAME_SCALE
         # Check if we should detect people or stream raw video frames
         if toggle_var.get ():
             result = model (frame, save=False, verbose=False) ## Inference 
@@ -84,9 +88,11 @@ def open_camera():
         opencv_image = cv2.cvtColor(display_frame, cv2.COLOR_BGR2RGBA) 
     
         # Capture the latest frame and transform to image 
-        pil_image = Image.fromarray(opencv_image) 
+        captured_image = Image.fromarray(opencv_image) 
 
-        photo_image = ctk.CTkImage (dark_image=pil_image, size=FRAME_SIZE)
+    
+        # Convert captured image to photoimage 
+        photo_image = ImageTk.PhotoImage(image=captured_image) 
     
         # Displaying photoimage in the label 
         cam_label.photo_image = photo_image 
