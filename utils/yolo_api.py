@@ -4,7 +4,7 @@ from ultralytics import YOLO
 
 RECT_COLOR = (180, 105, 255)
 
-def detect(frame, model):
+def detect(frame, model, detection_threshold):
     # Get class names 
     class_names = model.names
     people_found = False
@@ -15,7 +15,7 @@ def detect(frame, model):
         for i in range (len (result[0].boxes.xyxy)): # Iterate over the objects in a single image
             cls_idx = result[0].boxes.cls[i]
             cls_name = class_names[int (cls_idx)]
-            if cls_name != 'person' or result[0].boxes.conf[i] < .65 : continue
+            if cls_name != 'person' or result[0].boxes.conf[i] < detection_threshold : continue
             print (result[0].boxes.conf[i])
             people_found = True
 

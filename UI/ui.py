@@ -94,7 +94,7 @@ class App (ctk.CTk):
 
             # Check if we should detect people or stream raw video frames
             if self.detection_enabled.get ():
-                persons_found = detect (frame, self.model)
+                persons_found = detect (frame, self.model, self.detection_threshold)
                 if persons_found:   
                     self.out_cap.write(frame) 
                     # duration = self.out_cap.get(cv2.CAP_PROP_POS_MSEC)
