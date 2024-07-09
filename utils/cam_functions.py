@@ -28,8 +28,8 @@ def get_vcap_info(vcap):
     return vcap_width, vcap_height, vcap_fps
 
 
-def setup_output_stream(vcap):
-    w, h, _ = get_vcap_info(vcap)
+def setup_output_stream(vcap, frame_size):
+    w, h = frame_size
     try:  
         if not os.path.exists('captures_out2'):
             os.makedirs('captures_out2') 

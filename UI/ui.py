@@ -15,9 +15,8 @@ class App (ctk.CTk):
         self.channels = ['1', '2', '3', '4']
         self.selected_channel = ctk.StringVar (value=self.channels[0])
         self.detection_enabled = ctk.BooleanVar (value=False)
-        self.input_vcap = get_vcap (channel = int (self.selected_channel.get ()))
 
-        self.model = load_model()
+        self.model = load_model('Small')
 
         self.detection_threshold = .65
 
@@ -25,6 +24,9 @@ class App (ctk.CTk):
         self.FRAME_WIDTH, self.FRAME_HEIGHT = (640, 480) 
         self.FRAME_SIZE = (self.FRAME_WIDTH, self.FRAME_HEIGHT)
         self.RECT_COLOR = (255, 255, 0)
+
+        self.input_vcap = get_vcap (channel = int (self.selected_channel.get ()))
+        self.out_cap, self.out_path = setup_output_stream(self.input_vcap, self.FRAME_SIZE)
 
     def run (self):
         self.ui_setup ()
@@ -85,8 +87,6 @@ class App (ctk.CTk):
 
     def open_camera (self): 
 
-        out_cap, out_path = setup_output_stream(self.input_vcap)
-
         ret, frame = self.input_vcap.read() 
         display_frame = None
         if ret:
@@ -94,12 +94,11 @@ class App (ctk.CTk):
 
             # Check if we should detect people or stream raw video frames
             if self.detection_enabled.get ():
-                persons_found, out_frame = detect (frame, self.model)
+                persons_found = detect (frame, self.model)
                 if persons_found:   
-                    out_cap.write(out_frame) 
-                    duration = out_cap.get(cv2.CAP_PROP_POS_MSEC)
-                    people_num = 0
-                    insert_record(out_path, people_num , duration)
+                    self.out_cap.write(frame) 
+                    # duration = self.out_cap.get(cv2.CAP_PROP_POS_MSEC)
+                    # insert_record(self.out_path, people_num , duration)
             opencv_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA) 
         
             # Capture the latest frame and transform to image 

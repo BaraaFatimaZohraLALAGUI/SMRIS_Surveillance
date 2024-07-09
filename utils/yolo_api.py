@@ -20,12 +20,9 @@ def detect(frame, model):
             people_found = True
 
             x1, y1, x2, y2 = map(int, result[0].boxes.xyxy[i].tolist())
-            out_img = cv2.rectangle(frame, (x1, y1), (x2, y2), RECT_COLOR, 2)
+            cv2.rectangle(frame, (x1, y1), (x2, y2), RECT_COLOR, 2)
             
-    if not people_found:
-        return people_found, frame
-    else:
-        return people_found, out_img
+    return people_found
     
 models = {'Nano' : 'models\\yolov10n.pt', 'Small' : 'models\\yolov10s.pt', 'Medium' : 'models\\yolov10m.pt'}
 def load_model (model_name='Nano'):
