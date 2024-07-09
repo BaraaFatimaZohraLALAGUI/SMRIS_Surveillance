@@ -1,6 +1,5 @@
 import cv2
 import os
-import datetime
 
 def show_frame (img, scale_factor=.5):
 
@@ -29,7 +28,7 @@ def get_vcap_info(vcap):
     return vcap_width, vcap_height, vcap_fps
 
 
-def setup_output_stream(frame_size):
+def setup_output_stream(frame_size, timestamp):
     w, h = frame_size
     try:  
         if not os.path.exists('captures_out2'):
@@ -37,7 +36,6 @@ def setup_output_stream(frame_size):
     except OSError as error:  
         print(' -- error creating directory ') 
 
-    timestamp = datetime.datetime.now(tz=datetime.timezone.utc).strftime("%Y-%m-%d_%H-%M-%S_UTC")
     output_vid_path = os.path.join('captures_out2', f'rec_{timestamp}.mp4')
     out_cap = cv2.VideoWriter(output_vid_path, cv2.VideoWriter_fourcc(*'mp4v'), 30, (w, h))
 

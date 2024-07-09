@@ -1,3 +1,4 @@
+import datetime
 import customtkinter as ctk 
 from PIL import Image 
 import cv2
@@ -14,7 +15,7 @@ class App (ctk.CTk):
 
         self.channels = ['1', '2', '3', '4']
         self.selected_channel = ctk.StringVar (value=self.channels[3])
-        self.detection_enabled = ctk.BooleanVar (value=True)
+        self.detection_enabled = ctk.BooleanVar (value=False)
 
         self.model = load_model('Nano')
 
@@ -88,6 +89,7 @@ class App (ctk.CTk):
 
     def open_camera (self): 
         ret, frame = self.input_vcap.read() 
+        timestamp = datetime.datetime.now(tz=datetime.timezone.utc).strftime("%Y-%m-%d_%H-%M-%S_UTC")
         display_frame = None
         if ret:
             frame = cv2.resize(frame, self.FRAME_SIZE) 
@@ -97,13 +99,13 @@ class App (ctk.CTk):
                 persons_found = detect (frame, self.model, self.detection_threshold)
                 if persons_found: 
                     if self.current_rec_frame_count == 0:
-                        self.out_cap, self.out_path = setup_output_stream(self.FRAME_SIZE)
+                        self.out_cap, self.out_path = setup_output_stream(self.FRAME_SIZE, timestamp)
                     self.out_cap.write(frame) 
                     self.current_rec_frame_count += 1
                     print(self.current_rec_frame_count)
 
                 elif self.out_cap is not None and self.out_cap.isOpened ():
-                    insert_record(self.out_path, self.current_rec_frame_count)
+                    insert_record(self.out_path, self.current_rec_frame_count, timestamp)
                     self.current_rec_frame_count = 0
                     self.out_cap.release()
                     
