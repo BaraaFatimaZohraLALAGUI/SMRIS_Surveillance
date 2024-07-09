@@ -1,11 +1,10 @@
 import datetime
 from db.db_config import db 
 
-def insert_record(record_path, people_num, duration):
+def insert_record(record_path, frames_num):
     record = {
         "Path": record_path,
-        "Duration": duration,
-        "Number of People": people_num,
+        "Number of Frames": frames_num,
         "Timestamp": datetime.datetime.now(tz=datetime.timezone.utc),
     }
     res = db.records.insert_one(record)
