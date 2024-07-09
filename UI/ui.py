@@ -1,8 +1,9 @@
-from cam_capture import get_vcap
 import customtkinter as ctk 
-from ultralytics import YOLO
 from PIL import Image 
-import cv2 
+import cv2
+from db.db_manager import insert_record
+from utils.cam_functions import get_vcap, setup_output_stream
+from utils.yolo_api import detect, load_model 
 
 class App (ctk.CTk):
     def __init__ (self, app_name="SMRIS AI Surveillance"):
@@ -16,7 +17,7 @@ class App (ctk.CTk):
         self.detection_enabled = ctk.BooleanVar (value=False)
         self.input_vcap = get_vcap (channel = int (self.selected_channel.get ()))
 
-        self.model = YOLO ('models\\yolov10s.pt') 
+        self.model = load_model()
 
         self.detection_threshold = .65
 
@@ -69,7 +70,7 @@ class App (ctk.CTk):
 
     def channel_select (self):
         self.channel_label.configure (text = f"Channel {self.selected_channel.get ()}")
-        self.vcap = get_vcap (channel = self.selected_channel.get ())
+        self.input_vcap = get_vcap (channel = self.selected_channel.get ())
 
     def detection_threhold_adjust (self, value):
         self.detection_threshold = round (value, 3)
@@ -84,6 +85,8 @@ class App (ctk.CTk):
 
     def open_camera (self): 
 
+        out_cap, out_path = setup_output_stream(self.input_vcap)
+
         ret, frame = self.input_vcap.read() 
         display_frame = None
         if ret:
@@ -91,16 +94,12 @@ class App (ctk.CTk):
 
             # Check if we should detect people or stream raw video frames
             if self.detection_enabled.get ():
-                result = self.model (frame, save=False, verbose=False) ## Inference 
-
-                if len (result[0]):
-                    for i in range (len (result[0].boxes.xyxy)): # Iterate over the objects in a single image
-                        cls_idx = result[0].boxes.cls[i]
-                        cls_name = self.model.names[int (cls_idx)]
-                        if cls_name != 'person' or result[0].boxes.conf[i] < self.detection_threshold: continue
-                        x1, y1, x2, y2 = map(int, result[0].boxes.xyxy[i].tolist())
-                        frame = cv2.rectangle(frame, (x1, y1), (x2, y2), self.RECT_COLOR, 1)
-
+                persons_found, out_frame = detect (frame, self.model)
+                if persons_found:   
+                    out_cap.write(out_frame) 
+                    duration = out_cap.get(cv2.CAP_PROP_POS_MSEC)
+                    people_num = 0
+                    insert_record(out_path, people_num , duration)
             opencv_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA) 
         
             # Capture the latest frame and transform to image 
