@@ -66,7 +66,7 @@ class App (ctk.CTk):
         self.detection_toggle = ctk.CTkSwitch(self.detection_frame, text='Enable people detection', variable=self.detection_enabled, command=self.toggle_detection, font=("Calibri", 16)) 
         self.detection_toggle.grid (row=0, column = 0, pady=10, columnspan=3)
 
-        self.detection_threhold_label = ctk.CTkLabel (self.detection_frame, text="Set detection threhold", font=("Calibri", 16))
+        self.detection_threhold_label = ctk.CTkLabel (self.detection_frame, text="Set detection threshold", font=("Calibri", 16))
         self.detection_threhold_label.grid (row=1, column = 0, padx=5, pady=7, sticky='e')
 
         self.detection_threshold_slider = ctk.CTkSlider(master=self.detection_frame, from_=0.2, to=.95, command= self.detection_threhold_adjust) 
