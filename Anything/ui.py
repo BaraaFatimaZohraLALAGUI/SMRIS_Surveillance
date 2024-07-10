@@ -1,4 +1,3 @@
-import datetime
 import customtkinter as ctk 
 from PIL import Image 
 import cv2
@@ -14,13 +13,12 @@ class App (ctk.CTk):
         self.bind('<Escape>', lambda e: self.quit()) 
 
         self.channels = ['1', '2', '3', '4']
-        self.selected_channel = ctk.StringVar (value=self.channels[3])
+        self.selected_channel = ctk.StringVar (value=self.channels[0])
         self.detection_enabled = ctk.BooleanVar (value=False)
 
-        self.model = load_model('Nano')
+        self.model = load_model('Small')
 
-        self.detection_threshold = .25
-        self.current_rec_frame_count = 0
+        self.detection_threshold = .35
 
         self.FRAME_SCALE = .3
         self.FRAME_WIDTH, self.FRAME_HEIGHT = (800, 600) 
@@ -28,7 +26,7 @@ class App (ctk.CTk):
         self.RECT_COLOR = (255, 255, 0)
 
         self.input_vcap = get_vcap (channel = int (self.selected_channel.get ()))
-        self.out_cap = None
+        self.out_cap, self.out_path = setup_output_stream(self.input_vcap, self.FRAME_SIZE)
 
     def run (self):
         self.ui_setup ()
@@ -92,8 +90,8 @@ class App (ctk.CTk):
         #     self.detection_threshold_slider.configure (state = 'disabled')
 
     def open_camera (self): 
+
         ret, frame = self.input_vcap.read() 
-        timestamp = datetime.datetime.now(tz=datetime.timezone.utc).strftime("%Y-%m-%d_%H-%M-%S_UTC")
         display_frame = None
         if ret:
             frame = cv2.resize(frame, self.FRAME_SIZE) 
@@ -101,18 +99,8 @@ class App (ctk.CTk):
             # Check if we should detect people or stream raw video frames
             if self.detection_enabled.get ():
                 persons_found = detect (frame, self.model, self.detection_threshold)
-                if persons_found: 
-                    if self.current_rec_frame_count == 0:
-                        self.out_cap, self.out_path = setup_output_stream(self.FRAME_SIZE, timestamp)
+                if persons_found:   
                     self.out_cap.write(frame) 
-                    self.current_rec_frame_count += 1
-                    print(self.current_rec_frame_count)
-
-                elif self.out_cap is not None and self.out_cap.isOpened ():
-                    insert_record(self.out_path, self.current_rec_frame_count, timestamp)
-                    self.current_rec_frame_count = 0
-                    self.out_cap.release()
-                    
             opencv_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA) 
         
             # Capture the latest frame and transform to image 
