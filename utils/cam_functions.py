@@ -28,15 +28,15 @@ def get_vcap_info(vcap):
     return vcap_width, vcap_height, vcap_fps
 
 
-def setup_output_stream(frame_size, timestamp):
+def setup_output_stream(frame_size, timestamp, recording_path):
     w, h = frame_size
     try:  
-        if not os.path.exists('captures_out2'):
-            os.makedirs('captures_out2') 
-    except OSError as error:  
-        print(' -- error creating directory ') 
+        if not os.path.exists(recording_path):
+            os.makedirs() 
+    except OSError:  
+        print('Could not create directory') 
 
-    output_vid_path = os.path.join('captures_out2', f'rec_{timestamp}.mp4')
+    output_vid_path = os.path.join(recording_path, f'rec_{timestamp}.mp4')
     out_cap = cv2.VideoWriter(output_vid_path, cv2.VideoWriter_fourcc(*'mp4v'), 30, (w, h))
 
     return out_cap, output_vid_path
@@ -44,7 +44,6 @@ def setup_output_stream(frame_size, timestamp):
 def get_vcap (channel):
     IP = "10.1.67.111"
     RTSP_PORT = "554"
-    CHANNEL = "2"
     USER = "admin"
     PASS = "C@meraUSTO"
     RTSP_LINK = "rtsp://"+USER+":"+PASS+"@"+IP+":"+RTSP_PORT+"/cam/realmonitor?channel="+str (channel)+"&subtype=0"

@@ -32,6 +32,8 @@ class App (ctk.CTk):
         self.input_vcap = get_vcap (channel = int (self.selected_channel.get ()))
         self.out_cap = None
 
+        self.recording_storage_path = 'captures_out2'
+
     def run (self):
         self.ui_setup ()
         self.open_camera ()
@@ -64,9 +66,11 @@ class App (ctk.CTk):
         self.detection_frame.columnconfigure (2, weight=1)
         self.detection_frame.rowconfigure (0, weight=1)
         self.detection_frame.rowconfigure (1, weight=1)
+        self.detection_frame.rowconfigure (2, weight=1)
+        self.detection_frame.rowconfigure (3, weight=1)
 
         self.detection_toggle = ctk.CTkSwitch(self.detection_frame, text='Enable detection', variable=self.detection_enabled, switch_width=50, command=self.toggle_detection, font=("Calibri", 18), progress_color= '#1D4C86', button_color='#6DA9F5') 
-        self.detection_toggle.grid (row=0, column = 0, pady= 20, padx = 50, columnspan=1)
+        self.detection_toggle.grid (row=0, column = 0, pady= 20, padx = 50, columnspan=1, sticky='w')
 
         self.detection_frame_color_button = ctk.CTkButton(self.detection_frame, text="Detection frame color", command=self.color_picker, font=("Calibri", 18), width=130, height=40, corner_radius=20, border_color=self.bgr_to_hex(self.RECT_COLOR),  border_width=1, fg_color= 'transparent')
         self.detection_frame_color_button.grid(row=0, column=1, pady=20, padx=30, columnspan=2, sticky='ew')
@@ -85,8 +89,22 @@ class App (ctk.CTk):
         self.detection_threshold_value = ctk.CTkLabel (self.threshold_frame, text=f"{self.detection_threshold:.3f}", font=("Calibri", 16))
         self.detection_threshold_value.grid (row=0, column = 2, padx=20, pady=0, sticky='w')
 
-        self.detection_threshold_label = ctk.CTkLabel (self.threshold_frame, text="Detection Threshold", font=("Calibri", 16))
-        self.detection_threshold_label.grid (row=1, column = 0, padx=5, pady=0)
+        self.detection_threshold_label = ctk.CTkLabel (self.threshold_frame, text="Detection Threshold", font=("Calibri", 18))
+        self.detection_threshold_label.grid (row=1, column = 0, padx=10, pady=0)
+
+        self.folder_chooser_frame = ctk.CTkFrame(self.detection_frame, bg_color = 'transparent', corner_radius = 20, border_color = "#3B3B3B", border_width= 1, height=150)
+        self.folder_chooser_frame.grid (row=3, column = 0, padx=30, pady=20, columnspan=3, sticky='nsew')
+
+        self.folder_chooser_button = ctk.CTkButton (self.folder_chooser_frame, text='Choose a storage directory', command=self.select_folder, font=("Calibri", 18), width=130, height=40, corner_radius=20, border_color=self.bgr_to_hex(self.RECT_COLOR),  border_width=1, fg_color= 'transparent')
+        self.folder_chooser_button.pack (side='left', pady=20, padx= 20)
+
+        self.storage_path_label = ctk.CTkLabel (self.folder_chooser_frame, text=self.recording_storage_path, font=("Calibri", 16))
+        self.storage_path_label.pack (side='left')
+
+    def select_folder(self):
+        folder_path = ctk.filedialog.askdirectory()
+        if folder_path == "": return
+        self.storage_path_label.configure (text=folder_path)
 
     def channel_select (self):
         self.channel_label.configure (text = f"Channel {self.selected_channel.get ()}")
@@ -132,7 +150,7 @@ class App (ctk.CTk):
                 persons_found = detect (frame, self.model, self.detection_threshold, self.RECT_COLOR)
                 if persons_found: 
                     if self.current_rec_frame_count == 0:
-                        self.out_cap, self.out_path = setup_output_stream(self.FRAME_SIZE, timestamp)
+                        self.out_cap, self.out_path = setup_output_stream(self.FRAME_SIZE, timestamp, self.storage_path_label.cget("text"))
                     self.out_cap.write(frame) 
                     self.current_rec_frame_count += 1
 
