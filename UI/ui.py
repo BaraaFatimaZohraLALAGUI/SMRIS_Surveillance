@@ -39,7 +39,7 @@ class App (ctk.CTk):
         self.cleanup ()
 
     def ui_setup (self):
-        self.parent_frame = ctk.CTkFrame (self, bg_color='transparent')
+        self.parent_frame = ctk.CTkFrame (self, fg_color='transparent')
         self.parent_frame.pack (expand=True, fill='both', pady=40, padx = 60)
         
         self.camera_frame = ctk.CTkFrame (self.parent_frame) 
@@ -57,7 +57,7 @@ class App (ctk.CTk):
 
         ### Detection control 
         self.detection_frame = ctk.CTkFrame (self.parent_frame, bg_color='transparent')
-        self.detection_frame.pack (side='right', pady=20, padx=20, expand=True, fill='both')
+        self.detection_frame.pack (side='right', pady=20, padx=20, expand=True, fill='x')
 
         self.detection_frame.columnconfigure (0, weight=1)
         self.detection_frame.columnconfigure (1, weight=1)
@@ -65,24 +65,25 @@ class App (ctk.CTk):
         self.detection_frame.rowconfigure (0, weight=1)
         self.detection_frame.rowconfigure (1, weight=1)
 
+        self.detection_toggle = ctk.CTkSwitch(self.detection_frame, text='Enable detection', variable=self.detection_enabled, switch_width=50, command=self.toggle_detection, font=("Calibri", 18), progress_color= '#1D4C86', button_color='#6DA9F5') 
+        self.detection_toggle.grid (row=0, column = 0, pady= 20, padx = 50, columnspan=1)
 
-        self.detection_frame_color_button = ctk.CTkButton(self.detection_frame, text="Detection frame color", command=self.color_picker, font=("Calibri", 16), width=130, height=40, corner_radius=20, border_color=self.bgr_to_hex(self.RECT_COLOR),  border_width=1, fg_color= 'transparent')
-        self.detection_frame_color_button.grid(row=0, column=0, pady=20, padx=30)
-        self.detection_toggle = ctk.CTkSwitch(self.detection_frame, text='Enable detection', variable=self.detection_enabled, command=self.toggle_detection, font=("Calibri", 16), progress_color= '#1D4C86', button_color='#6DA9F5') 
-        self.detection_toggle.grid (row=0, column = 1, pady= 20, padx = 30, columnspan=2)
+        self.detection_frame_color_button = ctk.CTkButton(self.detection_frame, text="Detection frame color", command=self.color_picker, font=("Calibri", 18), width=130, height=40, corner_radius=20, border_color=self.bgr_to_hex(self.RECT_COLOR),  border_width=1, fg_color= 'transparent')
+        self.detection_frame_color_button.grid(row=0, column=1, pady=20, padx=30, columnspan=2, sticky='ew')
+        
 
-        self.threshold_frame = ctk.CTkFrame(self.detection_frame, bg_color = 'transparent', corner_radius = 20, width = 450, height = 85, border_color = "#3B3B3B", border_width= 1)
-        self.threshold_frame.grid(row=1, column=0, columnspan=3, pady=5, padx=5, ipady=20)
+        self.threshold_frame = ctk.CTkFrame(self.detection_frame, bg_color = 'transparent', corner_radius = 20, border_color = "#3B3B3B", border_width= 1)
+        self.threshold_frame.grid(row=1, column=0, columnspan=3, pady=5, padx=30, ipady=10, sticky='ew')
         self.threshold_frame.columnconfigure (0, weight=1)
         self.threshold_frame.rowconfigure (0, weight=1)
         self.threshold_frame.rowconfigure (1, weight=1)
 
         self.detection_threshold_slider = ctk.CTkSlider(master=self.threshold_frame, from_=0.2, to=.95, command= self.detection_threshold_adjust, width = 400, button_color = '#6DA9F5', progress_color= '#1D4C86') 
         self.detection_threshold_slider.set (self.detection_threshold)
-        self.detection_threshold_slider.grid (row=0, column = 0, padx=20, pady=5, sticky = 'ew')
+        self.detection_threshold_slider.grid (row=0, column = 0, padx=20, pady=0, sticky = 'ew')
 
         self.detection_threshold_value = ctk.CTkLabel (self.threshold_frame, text=f"{self.detection_threshold:.3f}", font=("Calibri", 16))
-        self.detection_threshold_value.grid (row=0, column = 2, padx=10, pady=5, sticky='ew')
+        self.detection_threshold_value.grid (row=0, column = 2, padx=20, pady=0, sticky='w')
 
         self.detection_threshold_label = ctk.CTkLabel (self.threshold_frame, text="Detection Threshold", font=("Calibri", 16))
         self.detection_threshold_label.grid (row=1, column = 0, padx=5, pady=0)

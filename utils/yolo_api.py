@@ -14,7 +14,6 @@ def detect(frame, model, detection_threshold, rect_color):
             cls_idx = result[0].boxes.cls[i]
             cls_name = class_names[int (cls_idx)]
             if cls_name != 'person' or result[0].boxes.conf[i] < detection_threshold : continue
-            # print (result[0].boxes.conf[i])
             people_found = True
 
             x1, y1, x2, y2 = map(int, result[0].boxes.xyxy[i].tolist())
