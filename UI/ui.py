@@ -6,6 +6,8 @@ from db.db_manager import insert_record
 from utils.cam_functions import get_vcap, setup_output_stream
 from utils.yolo_api import detect, load_model 
 
+from CTkColorPicker import *
+
 class App (ctk.CTk):
     def __init__ (self, app_name="SMRIS AI Surveillance"):
         super ().__init__ ()
@@ -63,26 +65,35 @@ class App (ctk.CTk):
         self.detection_frame.rowconfigure (0, weight=1)
         self.detection_frame.rowconfigure (1, weight=1)
 
-        self.detection_toggle = ctk.CTkSwitch(self.detection_frame, text='Enable people detection', variable=self.detection_enabled, command=self.toggle_detection, font=("Calibri", 16)) 
-        self.detection_toggle.grid (row=0, column = 0, pady=10, columnspan=3)
 
-        self.detection_threhold_label = ctk.CTkLabel (self.detection_frame, text="Set detection threshold", font=("Calibri", 16))
-        self.detection_threhold_label.grid (row=1, column = 0, padx=5, pady=7, sticky='e')
+        self.detection_frame_color_button = ctk.CTkButton(self.detection_frame, text="Detection frame color", command=self.color_picker, font=("Calibri", 16), width=130, height=40, corner_radius=20, border_color=self.bgr_to_hex(self.RECT_COLOR),  border_width=1, fg_color= 'transparent')
+        self.detection_frame_color_button.grid(row=0, column=0, pady=20, padx=30)
+        self.detection_toggle = ctk.CTkSwitch(self.detection_frame, text='Enable detection', variable=self.detection_enabled, command=self.toggle_detection, font=("Calibri", 16), progress_color= '#1D4C86', button_color='#6DA9F5') 
+        self.detection_toggle.grid (row=0, column = 1, pady= 20, padx = 30, columnspan=2)
 
-        self.detection_threshold_slider = ctk.CTkSlider(master=self.detection_frame, from_=0.2, to=.95, command= self.detection_threhold_adjust) 
+        self.threshold_frame = ctk.CTkFrame(self.detection_frame, bg_color = 'transparent', corner_radius = 20, width = 450, height = 85, border_color = "#3B3B3B", border_width= 1)
+        self.threshold_frame.grid(row=1, column=0, columnspan=3, pady=5, padx=5, ipady=20)
+        self.threshold_frame.columnconfigure (0, weight=1)
+        self.threshold_frame.rowconfigure (0, weight=1)
+        self.threshold_frame.rowconfigure (1, weight=1)
+
+        self.detection_threshold_slider = ctk.CTkSlider(master=self.threshold_frame, from_=0.2, to=.95, command= self.detection_threshold_adjust, width = 400, button_color = '#6DA9F5', progress_color= '#1D4C86') 
         self.detection_threshold_slider.set (self.detection_threshold)
-        self.detection_threshold_slider.grid (row=1, column = 1, padx=5, pady=7, sticky='ew')
+        self.detection_threshold_slider.grid (row=0, column = 0, padx=20, pady=5, sticky = 'ew')
 
-        self.detection_threhold_value = ctk.CTkLabel (self.detection_frame, text=f"{self.detection_threshold:.3f}", font=("Calibri", 16))
-        self.detection_threhold_value.grid (row=1, column = 2, padx=5, pady=7, sticky='w')
+        self.detection_threshold_value = ctk.CTkLabel (self.threshold_frame, text=f"{self.detection_threshold:.3f}", font=("Calibri", 16))
+        self.detection_threshold_value.grid (row=0, column = 2, padx=10, pady=5, sticky='ew')
+
+        self.detection_threshold_label = ctk.CTkLabel (self.threshold_frame, text="Detection Threshold", font=("Calibri", 16))
+        self.detection_threshold_label.grid (row=1, column = 0, padx=5, pady=0)
 
     def channel_select (self):
         self.channel_label.configure (text = f"Channel {self.selected_channel.get ()}")
         self.input_vcap = get_vcap (channel = self.selected_channel.get ())
 
-    def detection_threhold_adjust (self, value):
+    def detection_threshold_adjust (self, value):
         self.detection_threshold = round (value, 3)
-        self.detection_threhold_value.configure (text=f"{self.detection_threshold:.3f}")
+        self.detection_threshold_value.configure (text=f"{self.detection_threshold:.3f}")
 
     def toggle_detection (self):
         pass
@@ -91,6 +102,23 @@ class App (ctk.CTk):
         # else:
         #     self.detection_threshold_slider.configure (state = 'disabled')
 
+    def bgr_to_hex(self, rgb):
+        rgb_str = '%02x%02x%02x' % rgb
+        return "#" + rgb_str[4:] + rgb_str[2:4] + rgb_str[:2]
+    
+    def hex_to_bgr(self, hex_color):
+        if hex_color.startswith('#'):
+            hex_color = hex_color[1:]
+            
+        bgr = tuple(int(hex_color[i:i+2], 16) for i in (4, 2, 0))
+        return bgr
+    
+    def color_picker(self):
+        pick_color = AskColor()
+        color = pick_color.get()
+        self.detection_frame_color_button.configure(border_color = color)
+        self.RECT_COLOR = self.hex_to_bgr(color)
+    
     def open_camera (self): 
         ret, frame = self.input_vcap.read() 
         timestamp = datetime.datetime.now(tz=datetime.timezone.utc).strftime("%Y-%m-%d_%H-%M-%S_UTC")
@@ -100,13 +128,12 @@ class App (ctk.CTk):
             
             # Check if we should detect people or stream raw video frames
             if self.detection_enabled.get ():
-                persons_found = detect (frame, self.model, self.detection_threshold)
+                persons_found = detect (frame, self.model, self.detection_threshold, self.RECT_COLOR)
                 if persons_found: 
                     if self.current_rec_frame_count == 0:
                         self.out_cap, self.out_path = setup_output_stream(self.FRAME_SIZE, timestamp)
                     self.out_cap.write(frame) 
                     self.current_rec_frame_count += 1
-                    print(self.current_rec_frame_count)
 
                 elif self.out_cap is not None and self.out_cap.isOpened ():
                     insert_record(self.out_path, self.current_rec_frame_count, timestamp)

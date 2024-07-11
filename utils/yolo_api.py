@@ -2,9 +2,7 @@ import cv2
 from ultralytics import YOLO
 
 
-RECT_COLOR = (180, 105, 255)
-
-def detect(frame, model, detection_threshold):
+def detect(frame, model, detection_threshold, rect_color):
     # Get class names 
     class_names = model.names
     people_found = False
@@ -20,7 +18,7 @@ def detect(frame, model, detection_threshold):
             people_found = True
 
             x1, y1, x2, y2 = map(int, result[0].boxes.xyxy[i].tolist())
-            cv2.rectangle(frame, (x1, y1), (x2, y2), RECT_COLOR, 2)
+            cv2.rectangle(frame, (x1, y1), (x2, y2), rect_color, 2)
             
     return people_found
     
