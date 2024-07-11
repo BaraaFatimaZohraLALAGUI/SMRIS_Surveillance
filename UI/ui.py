@@ -104,7 +104,7 @@ class App (ctk.CTk):
     def select_folder(self):
         folder_path = ctk.filedialog.askdirectory()
         if folder_path == "": return
-        self.storage_path_label.configure (text=folder_path)
+        self.storage_path_label.configure (text=folder_path.replace ('/', '\\'))
 
     def channel_select (self):
         self.channel_label.configure (text = f"Channel {self.selected_channel.get ()}")
@@ -155,7 +155,8 @@ class App (ctk.CTk):
                     self.current_rec_frame_count += 1
 
                 elif self.out_cap is not None and self.out_cap.isOpened ():
-                    insert_record(self.out_path, self.current_rec_frame_count, timestamp)
+                    print (self.out_path)
+                    # insert_record(self.out_path, self.current_rec_frame_count, timestamp)
                     self.current_rec_frame_count = 0
                     self.out_cap.release()
                     

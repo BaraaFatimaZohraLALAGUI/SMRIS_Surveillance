@@ -6,7 +6,6 @@ def detect(frame, model, detection_threshold, rect_color):
     # Get class names 
     class_names = model.names
     people_found = False
-    # frame_resized = cv2.resize (frame, (0, 0), fx=.5, fy=.5)
     result = model (frame, save=False, verbose=False) ## Inference 
 
     if len (result[0]): # If no objects have been detected 

@@ -1,25 +1,6 @@
 import cv2
 import os
 
-def show_frame (img, scale_factor=.5):
-
-    # Resize
-    width = int(img.shape[1] * scale_factor)
-    height = int(img.shape[0] * scale_factor)
-
-    min_dim = width if width < height else height
-    new_dim = (min_dim, min_dim)
-    img = cv2.resize (img, new_dim)
-
-    # Display
-    cv2.imshow ("Detection", img)
-
-    if cv2.waitKey (2) & 0xFF == ord("q"):
-        cv2.destroyAllWindows()
-        return True
-    return False
-
-
 # Get input capture info 
 def get_vcap_info(vcap):
     vcap_width     = int(vcap.get(cv2.CAP_PROP_FRAME_WIDTH))   # float `width`
