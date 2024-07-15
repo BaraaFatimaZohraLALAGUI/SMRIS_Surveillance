@@ -22,12 +22,11 @@ def setup_output_stream(frame_size, timestamp, recording_path):
 
     return out_cap, output_vid_path
 
-def get_vcap (channel):
-    IP = "10.1.67.111"
+def get_vcap (ip, channel):
     RTSP_PORT = "554"
     USER = "admin"
     PASS = "C@meraUSTO"
-    RTSP_LINK = "rtsp://"+USER+":"+PASS+"@"+IP+":"+RTSP_PORT+"/cam/realmonitor?channel="+str (channel)+"&subtype=0"
+    RTSP_LINK = "rtsp://"+USER+":"+PASS+"@"+ip+":"+RTSP_PORT+"/cam/realmonitor?channel="+str (channel)+"&subtype=0"
     os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;udp"
 
     return cv2.VideoCapture(RTSP_LINK, cv2.CAP_FFMPEG)

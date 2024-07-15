@@ -9,6 +9,13 @@ from utils.yolo_api import detect, load_model
 from CTkColorPicker import *
 
 class App (ctk.CTk):
+
+    STANDARD_FONT = ("Calibri", 18) 
+    FRAME_SCALE = .3
+    FRAME_WIDTH, FRAME_HEIGHT = (640, 480) 
+    FRAME_SIZE = (FRAME_WIDTH, FRAME_HEIGHT)
+        
+
     def __init__ (self, app_name="SMRIS AI Surveillance"):
         super ().__init__ ()
         self.title (app_name)
@@ -24,12 +31,10 @@ class App (ctk.CTk):
         self.detection_threshold = .25
         self.current_rec_frame_count = 0
 
-        self.FRAME_SCALE = .3
-        self.FRAME_WIDTH, self.FRAME_HEIGHT = (800, 600) 
-        self.FRAME_SIZE = (self.FRAME_WIDTH, self.FRAME_HEIGHT)
         self.RECT_COLOR = (255, 255, 0)
 
-        self.input_vcap = get_vcap (channel = int (self.selected_channel.get ()))
+        self.camera_ip_address = ctk.StringVar (value="10.1.67.111")
+        self.input_vcap = get_vcap (self.camera_ip_address.get (), channel = 1) # int (self.selected_channel.get ())
         self.out_cap = None
 
         self.recording_storage_path = 'captures_out2'
@@ -44,22 +49,51 @@ class App (ctk.CTk):
         self.parent_frame = ctk.CTkFrame (self, fg_color='transparent')
         self.parent_frame.pack (expand=True, fill='both', pady=40, padx = 60)
         
-        self.camera_frame = ctk.CTkFrame (self.parent_frame) 
+        self.camera_frame = ctk.CTkFrame (self.parent_frame, corner_radius=20) 
         self.camera_frame.pack (side='left', expand=False, fill='y', pady=20, padx=20)
+
+        self.cam_ip_frame = ctk.CTkFrame (self.camera_frame)
+        self.cam_ip_frame.pack (expand=False, fill='x', pady=20, padx=40)
+
+        self.ip_entry_field = ctk.CTkEntry (self.cam_ip_frame, textvariable=self.camera_ip_address, corner_radius = 0, font=self.STANDARD_FONT)
+        self.ip_entry_field.pack (side='left', expand=True, fill='x')
 
         self.channel_label = ctk.CTkLabel (self.camera_frame, text='Channel ' + self.selected_channel.get (), font=('Calibri', 24, 'bold')) 
         self.channel_label.pack (side='top')
 
-        self.cam_view = ctk.CTkLabel (self.camera_frame, text='') 
-        self.cam_view.pack(expand=False, fill='x', pady=10, padx=10, side='top') 
+        self.cam_connect_button = ctk.CTkButton (self.cam_ip_frame, text="Connect", command = self.channel_select, corner_radius = 0, font=self.STANDARD_FONT, width=200)
+        self.cam_connect_button.pack (side='right', expand=False, fill='both')
 
-        self.channel_combo = ctk.CTkComboBox (self.camera_frame, values=self.channels, variable=self.selected_channel, command = lambda event: self.channel_select ())
-        self.channel_combo.pack (side='top')
+        self.cam_view = ctk.CTkLabel (self.camera_frame, text='', corner_radius=15) 
+        self.cam_view.pack(expand=False, fill='x', pady=15, padx=40, side='top') 
 
+        # self.channel_combo = ctk.CTkComboBox (self.camera_frame, values=self.channels, variable=self.selected_channel, command = lambda event: self.channel_select ())
+        # self.channel_combo.pack (side='top')
+
+        # Channel selection buttons 
+        self.channel_selection_frame = ctk.CTkFrame (self.camera_frame, fg_color='transparent')
+        self.channel_selection_frame.pack (expand=True, fill="both", padx=180, pady=10)
+
+        self.channel_selection_frame.columnconfigure (0, weight=1)
+        self.channel_selection_frame.columnconfigure (1, weight=1)
+        self.channel_selection_frame.rowconfigure (0, weight=1)
+        self.channel_selection_frame.rowconfigure (1, weight=1)
+
+        self.channel_top_left = ctk.CTkButton (self.channel_selection_frame, text="TL", command=lambda : self.channel_select (4), font=self.STANDARD_FONT, fg_color='transparent', border_color="#00FFFF", border_width=1, corner_radius=10)
+        self.channel_top_left.grid (row=0, column=0, sticky='nsew', padx=10, pady=10)
+
+        self.channel_top_right = ctk.CTkButton (self.channel_selection_frame, text="TR", command=lambda : self.channel_select (1), font=self.STANDARD_FONT, fg_color='transparent', border_color="#00FFFF", border_width=1, corner_radius=10)
+        self.channel_top_right.grid (row=0, column=1, sticky='nsew', padx=10, pady=10)
+
+        self.channel_bottom_left = ctk.CTkButton (self.channel_selection_frame, text="BL", command=lambda : self.channel_select (3), font=self.STANDARD_FONT, fg_color='transparent', border_color="#00FFFF", border_width=1, corner_radius=10)
+        self.channel_bottom_left.grid (row=1, column=0, sticky='nsew', padx=10, pady=10)
+
+        self.channel_bottom_right = ctk.CTkButton (self.channel_selection_frame, text="BR", command=lambda : self.channel_select (2), font=self.STANDARD_FONT, fg_color='transparent', border_color="#00FFFF", border_width=1, corner_radius=10)
+        self.channel_bottom_right.grid (row=1, column=1, sticky='nsew', padx=10, pady=10)
 
         ### Detection control 
-        self.detection_frame = ctk.CTkFrame (self.parent_frame, bg_color='transparent')
-        self.detection_frame.pack (side='right', pady=20, padx=20, expand=True, fill='x')
+        self.detection_frame = ctk.CTkFrame (self.parent_frame, bg_color='transparent', corner_radius=20)
+        self.detection_frame.pack (side='right', pady=20, padx=20, expand=True, fill='both')
 
         self.detection_frame.columnconfigure (0, weight=1)
         self.detection_frame.columnconfigure (1, weight=1)
@@ -69,10 +103,10 @@ class App (ctk.CTk):
         self.detection_frame.rowconfigure (2, weight=1)
         self.detection_frame.rowconfigure (3, weight=1)
 
-        self.detection_toggle = ctk.CTkSwitch(self.detection_frame, text='Enable detection', variable=self.detection_enabled, switch_width=50, command=self.toggle_detection, font=("Calibri", 18), progress_color= '#1D4C86', button_color='#6DA9F5') 
+        self.detection_toggle = ctk.CTkSwitch(self.detection_frame, text='Enable detection', variable=self.detection_enabled, switch_width=50, command=self.toggle_detection, font=self.STANDARD_FONT, progress_color= '#1D4C86', button_color='#6DA9F5') 
         self.detection_toggle.grid (row=0, column = 0, pady= 20, padx = 50, columnspan=1, sticky='w')
 
-        self.detection_frame_color_button = ctk.CTkButton(self.detection_frame, text="Detection frame color", command=self.color_picker, font=("Calibri", 18), width=130, height=40, corner_radius=20, border_color=self.bgr_to_hex(self.RECT_COLOR),  border_width=1, fg_color= 'transparent')
+        self.detection_frame_color_button = ctk.CTkButton(self.detection_frame, text="Detection frame color", command=self.color_picker, font=self.STANDARD_FONT, width=130, height=40, corner_radius=20, border_color=self.bgr_to_hex(self.RECT_COLOR),  border_width=1, fg_color= 'transparent')
         self.detection_frame_color_button.grid(row=0, column=1, pady=20, padx=30, columnspan=2, sticky='ew')
         
 
@@ -89,13 +123,13 @@ class App (ctk.CTk):
         self.detection_threshold_value = ctk.CTkLabel (self.threshold_frame, text=f"{self.detection_threshold:.3f}", font=("Calibri", 16))
         self.detection_threshold_value.grid (row=0, column = 2, padx=20, pady=0, sticky='w')
 
-        self.detection_threshold_label = ctk.CTkLabel (self.threshold_frame, text="Detection Threshold", font=("Calibri", 18))
+        self.detection_threshold_label = ctk.CTkLabel (self.threshold_frame, text="Detection Threshold", font=self.STANDARD_FONT)
         self.detection_threshold_label.grid (row=1, column = 0, padx=10, pady=0)
 
         self.folder_chooser_frame = ctk.CTkFrame(self.detection_frame, bg_color = 'transparent', corner_radius = 20, border_color = "#3B3B3B", border_width= 1, height=150)
         self.folder_chooser_frame.grid (row=3, column = 0, padx=30, pady=20, columnspan=3, sticky='nsew')
 
-        self.folder_chooser_button = ctk.CTkButton (self.folder_chooser_frame, text='Choose a storage directory', command=self.select_folder, font=("Calibri", 18), width=130, height=40, corner_radius=20, border_color=self.bgr_to_hex(self.RECT_COLOR),  border_width=1, fg_color= 'transparent')
+        self.folder_chooser_button = ctk.CTkButton (self.folder_chooser_frame, text='Choose a storage directory', command=self.select_folder, font=self.STANDARD_FONT, width=130, height=40, corner_radius=20, border_color=self.bgr_to_hex(self.RECT_COLOR),  border_width=1, fg_color= 'transparent')
         self.folder_chooser_button.pack (side='left', pady=20, padx= 20)
 
         self.storage_path_label = ctk.CTkLabel (self.folder_chooser_frame, text=self.recording_storage_path, font=("Calibri", 16))
@@ -106,9 +140,10 @@ class App (ctk.CTk):
         if folder_path == "": return
         self.storage_path_label.configure (text=folder_path.replace ('/', '\\'))
 
-    def channel_select (self):
-        self.channel_label.configure (text = f"Channel {self.selected_channel.get ()}")
-        self.input_vcap = get_vcap (channel = self.selected_channel.get ())
+    def channel_select (self, channel=1):
+        self.selected_channel.set (channel)
+        self.channel_label.configure (text = f"Channel {channel}")
+        self.input_vcap = get_vcap (self.camera_ip_address.get (), channel = channel) 
 
     def detection_threshold_adjust (self, value):
         self.detection_threshold = round (value, 3)
@@ -155,7 +190,6 @@ class App (ctk.CTk):
                     self.current_rec_frame_count += 1
 
                 elif self.out_cap is not None and self.out_cap.isOpened ():
-                    print (self.out_path)
                     # insert_record(self.out_path, self.current_rec_frame_count, timestamp)
                     self.current_rec_frame_count = 0
                     self.out_cap.release()
