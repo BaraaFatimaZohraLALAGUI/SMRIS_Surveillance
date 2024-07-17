@@ -1,5 +1,6 @@
 import datetime
 import customtkinter as ctk 
+import tkinter as tk
 from PIL import Image 
 import cv2
 from db.db_manager import insert_record
@@ -12,7 +13,7 @@ class App (ctk.CTk):
 
     STANDARD_FONT = ("Calibri", 18) 
     FRAME_SCALE = .3
-    FRAME_WIDTH, FRAME_HEIGHT = (640, 480) 
+    FRAME_WIDTH, FRAME_HEIGHT = (800, 600) 
     FRAME_SIZE = (FRAME_WIDTH, FRAME_HEIGHT)
         
 
@@ -76,24 +77,36 @@ class App (ctk.CTk):
 
         # Channel selection buttons 
         self.channel_selection_frame = ctk.CTkFrame (self.camera_frame, fg_color='transparent')
-        self.channel_selection_frame.pack (expand=True, fill="both", padx=180, pady=10)
+        self.channel_selection_frame.pack ( padx=180, pady=10)
 
         self.channel_selection_frame.columnconfigure (0, weight=1)
         self.channel_selection_frame.columnconfigure (1, weight=1)
         self.channel_selection_frame.rowconfigure (0, weight=1)
         self.channel_selection_frame.rowconfigure (1, weight=1)
 
-        self.channel_top_left = ctk.CTkButton (self.channel_selection_frame, text="TL", command=lambda : self.channel_select (4), font=self.STANDARD_FONT, fg_color='transparent', border_color="#00FFFF", border_width=1, corner_radius=10)
-        self.channel_top_left.grid (row=0, column=0, sticky='nsew', padx=5, pady=5)
+        top_left_icon = cv2.cvtColor(cv2.imread ("UI/gfx/TOP_LEFT.png", -1)[:-180, 100:, :], cv2.COLOR_BGR2RGBA) 
+        top_left_icon = ctk.CTkImage (dark_image=Image.fromarray(top_left_icon), size=(50, 50))
 
-        self.channel_top_right = ctk.CTkButton (self.channel_selection_frame, text="TR", command=lambda : self.channel_select (1), font=self.STANDARD_FONT, fg_color='transparent', border_color="#00FFFF", border_width=1, corner_radius=10)
-        self.channel_top_right.grid (row=0, column=1, sticky='nsew', padx=5, pady=5)
+        top_right_icon = cv2.cvtColor(cv2.imread ("UI/gfx/TOP_RIGHT.png", -1)[:-180, :-100, :], cv2.COLOR_BGR2RGBA) 
+        top_right_icon = ctk.CTkImage (dark_image=Image.fromarray(top_right_icon), size=(50, 50))
 
-        self.channel_bottom_left = ctk.CTkButton (self.channel_selection_frame, text="BL", command=lambda : self.channel_select (3), font=self.STANDARD_FONT, fg_color='transparent', border_color="#00FFFF", border_width=1, corner_radius=10)
-        self.channel_bottom_left.grid (row=1, column=0, sticky='nsew', padx=5, pady=5)
+        bottom_left_icon = cv2.cvtColor(cv2.imread ("UI/gfx/BOTTOM_LEFT.png", -1)[180:, 100:, :], cv2.COLOR_BGR2RGBA) 
+        bottom_left_icon = ctk.CTkImage (dark_image=Image.fromarray(bottom_left_icon), size=(50, 50))
 
-        self.channel_bottom_right = ctk.CTkButton (self.channel_selection_frame, text="BR", command=lambda : self.channel_select (2), font=self.STANDARD_FONT, fg_color='transparent', border_color="#00FFFF", border_width=1, corner_radius=10)
-        self.channel_bottom_right.grid (row=1, column=1, sticky='nsew', padx=5, pady=5)
+        bottom_right_icon = cv2.cvtColor(cv2.imread ("UI/gfx/BOTTOM_RIGHT.png", -1)[180:, :-100, :], cv2.COLOR_BGR2RGBA) 
+        bottom_right_icon = ctk.CTkImage (dark_image=Image.fromarray(bottom_right_icon), size=(50, 50))
+
+        self.channel_top_left = ctk.CTkButton (master=self.channel_selection_frame, image=top_left_icon, text="", command=lambda : self.channel_select (4), font=self.STANDARD_FONT, fg_color='transparent', bg_color='transparent', border_color="#00FFFF", border_width=1, corner_radius=10)
+        self.channel_top_left.grid (row=0, column=0, sticky='news', padx=5, pady=5)
+
+        self.channel_top_right = ctk.CTkButton (self.channel_selection_frame, image=top_right_icon, text="", command=lambda : self.channel_select (1), font=self.STANDARD_FONT, fg_color='transparent', border_color="#00FFFF", border_width=1, corner_radius=10)
+        self.channel_top_right.grid (row=0, column=1, sticky='news', padx=5, pady=5)
+
+        self.channel_bottom_left = ctk.CTkButton (self.channel_selection_frame, image=bottom_left_icon, text="", command=lambda : self.channel_select (3), font=self.STANDARD_FONT, fg_color='transparent', border_color="#00FFFF", border_width=1, corner_radius=10)
+        self.channel_bottom_left.grid (row=1, column=0, sticky='news', padx=5, pady=5)
+
+        self.channel_bottom_right = ctk.CTkButton (self.channel_selection_frame, image=bottom_right_icon, text="", command=lambda : self.channel_select (2), font=self.STANDARD_FONT, fg_color='transparent', border_color="#00FFFF", border_width=1, corner_radius=10)
+        self.channel_bottom_right.grid (row=1, column=1, sticky='news', padx=5, pady=5)
 
         ### Detection control 
         self.detection_frame = ctk.CTkFrame (self.parent_frame, bg_color='transparent', corner_radius=20)
@@ -153,7 +166,7 @@ class App (ctk.CTk):
         self.folder_chooser_button = ctk.CTkButton (self.folder_chooser_frame, text='Choose a storage directory', command=self.select_folder, font=self.STANDARD_FONT, width=130, height=40, corner_radius=20, border_color=self.bgr_to_hex(self.RECT_COLOR),  border_width=1, fg_color= 'transparent')
         self.folder_chooser_button.pack (side='left', pady=20, padx= 20)
 
-        self.storage_path_label = ctk.CTkLabel (self.folder_chooser_frame, text=self.recording_storage_path, font=("Calibri", 16))
+        self.storage_path_label = ctk.CTkLabel (self.folder_chooser_frame, text=self.recording_storage_path, font=self.STANDARD_FONT)
         self.storage_path_label.pack (side='left')
 
 
@@ -241,7 +254,7 @@ class App (ctk.CTk):
                     self.current_rec_frame_count += 1
 
                 elif self.out_cap is not None and self.out_cap.isOpened ():
-                    # insert_record(self.out_path, self.current_rec_frame_count, timestamp)
+                    insert_record(self.out_path, self.current_rec_frame_count, timestamp)
                     self.current_rec_frame_count = 0
                     self.out_cap.release()
                     
