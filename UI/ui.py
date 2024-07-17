@@ -48,6 +48,7 @@ class App (ctk.CTk):
         self.input_vcap = get_vcap (self.camera_ip_address.get (), channel = 1) # int (self.selected_channel.get ())
         self.out_cap = None
 
+        self.recording_behavior = ctk.StringVar (value="")
         self.recording_storage_path = 'captures_out2'
 
     def run (self):
@@ -126,6 +127,7 @@ class App (ctk.CTk):
         self.detection_frame.rowconfigure (2, weight=1)
         self.detection_frame.rowconfigure (3, weight=1)
         self.detection_frame.rowconfigure (4, weight=1)
+        self.detection_frame.rowconfigure (5, weight=1)
 
         self.detection_toggle = ctk.CTkSwitch(self.detection_frame, text='Enable detection', variable=self.detection_enabled, switch_width=50, command=self.toggle_detection, font=self.STANDARD_FONT, fg_color= self.VIOLET_DARK, progress_color= self.VIOLET_LIGHT) 
         self.detection_toggle.grid (row=0, column = 0, pady= 20, padx = 50, columnspan=1, sticky='w')
@@ -165,11 +167,14 @@ class App (ctk.CTk):
         self.detection_threshold_label = ctk.CTkLabel (self.threshold_frame, text="Detection Threshold", font=self.STANDARD_FONT)
         self.detection_threshold_label.grid (row=2, column = 0, padx=10, pady=0)
 
+        self.recording_segmented_buttons = ctk.CTkSegmentedButton (self.detection_frame, selected_color=self.VIOLET_LIGHT, border_width=1, font=self.STANDARD_FONT, values=['Recording off', 'Continuous recording', 'Only on detection'], unselected_color="#474554", height=40, corner_radius=10, selected_hover_color=self.VIOLET_LIGHT, variable=self.recording_behavior)
+        self.recording_segmented_buttons.grid (row=4, column = 0, padx=30, pady=20, columnspan=3, sticky='nsew')
+
         ## Storage folder chooser
         self.folder_chooser_frame = ctk.CTkFrame(self.detection_frame, bg_color = 'transparent', corner_radius = 20, border_color = "#3B3B3B", border_width= 1, height=150)
-        self.folder_chooser_frame.grid (row=4, column = 0, padx=30, pady=20, columnspan=3, sticky='nsew')
+        self.folder_chooser_frame.grid (row=5, column = 0, padx=30, pady=20, columnspan=3, sticky='nsew')
 
-        self.folder_chooser_button = ctk.CTkButton (self.folder_chooser_frame, text='Choose a storage directory', command=self.select_folder, font=self.STANDARD_FONT, width=130, height=40, corner_radius=20, border_color=self.VIOLET_DARK,border_width=1, fg_color= self.VIOLET_DARK)
+        self.folder_chooser_button = ctk.CTkButton (self.folder_chooser_frame, text='Choose a storage directory', command=self.select_folder, font=self.STANDARD_FONT, width=130, height=40, corner_radius=20, border_color=self.VIOLET_DARK, hover_color=self.VIOLET_LIGHT,border_width=1, fg_color= self.VIOLET_DARK)
         self.folder_chooser_button.pack (side='left', pady=20, padx= 20)
 
         self.storage_path_label = ctk.CTkLabel (self.folder_chooser_frame, text=self.recording_storage_path, font=self.STANDARD_FONT)
