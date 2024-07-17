@@ -23,7 +23,11 @@ class App (ctk.CTk):
         self.bind('<Escape>', lambda e: self.quit()) 
 
         self.channels = ['1', '2', '3', '4']
+        self.models = ['YOLOv10 Nano', 'YOLOv10 Small', 'YOLOv10 Medium']
+
         self.selected_channel = ctk.StringVar (value=self.channels[3])
+
+        self.selected_model = ctk.StringVar (value=self.models[0])
         self.detection_enabled = ctk.BooleanVar (value=False)
 
         self.model = load_model('Nano')
@@ -80,20 +84,20 @@ class App (ctk.CTk):
         self.channel_selection_frame.rowconfigure (1, weight=1)
 
         self.channel_top_left = ctk.CTkButton (self.channel_selection_frame, text="TL", command=lambda : self.channel_select (4), font=self.STANDARD_FONT, fg_color='transparent', border_color="#00FFFF", border_width=1, corner_radius=10)
-        self.channel_top_left.grid (row=0, column=0, sticky='nsew', padx=10, pady=10)
+        self.channel_top_left.grid (row=0, column=0, sticky='nsew', padx=5, pady=5)
 
         self.channel_top_right = ctk.CTkButton (self.channel_selection_frame, text="TR", command=lambda : self.channel_select (1), font=self.STANDARD_FONT, fg_color='transparent', border_color="#00FFFF", border_width=1, corner_radius=10)
-        self.channel_top_right.grid (row=0, column=1, sticky='nsew', padx=10, pady=10)
+        self.channel_top_right.grid (row=0, column=1, sticky='nsew', padx=5, pady=5)
 
         self.channel_bottom_left = ctk.CTkButton (self.channel_selection_frame, text="BL", command=lambda : self.channel_select (3), font=self.STANDARD_FONT, fg_color='transparent', border_color="#00FFFF", border_width=1, corner_radius=10)
-        self.channel_bottom_left.grid (row=1, column=0, sticky='nsew', padx=10, pady=10)
+        self.channel_bottom_left.grid (row=1, column=0, sticky='nsew', padx=5, pady=5)
 
         self.channel_bottom_right = ctk.CTkButton (self.channel_selection_frame, text="BR", command=lambda : self.channel_select (2), font=self.STANDARD_FONT, fg_color='transparent', border_color="#00FFFF", border_width=1, corner_radius=10)
-        self.channel_bottom_right.grid (row=1, column=1, sticky='nsew', padx=10, pady=10)
+        self.channel_bottom_right.grid (row=1, column=1, sticky='nsew', padx=5, pady=5)
 
         ### Detection control 
         self.detection_frame = ctk.CTkFrame (self.parent_frame, bg_color='transparent', corner_radius=20)
-        self.detection_frame.pack (side='right', pady=20, padx=20, expand=True, fill='both')
+        self.detection_frame.pack (side='right', pady=20, padx=20, expand=True, fill='x')
 
         self.detection_frame.columnconfigure (0, weight=1)
         self.detection_frame.columnconfigure (1, weight=1)
@@ -102,6 +106,7 @@ class App (ctk.CTk):
         self.detection_frame.rowconfigure (1, weight=1)
         self.detection_frame.rowconfigure (2, weight=1)
         self.detection_frame.rowconfigure (3, weight=1)
+        self.detection_frame.rowconfigure (4, weight=1)
 
         self.detection_toggle = ctk.CTkSwitch(self.detection_frame, text='Enable detection', variable=self.detection_enabled, switch_width=50, command=self.toggle_detection, font=self.STANDARD_FONT, progress_color= '#1D4C86', button_color='#6DA9F5') 
         self.detection_toggle.grid (row=0, column = 0, pady= 20, padx = 50, columnspan=1, sticky='w')
@@ -110,8 +115,23 @@ class App (ctk.CTk):
         self.detection_frame_color_button.grid(row=0, column=1, pady=20, padx=30, columnspan=2, sticky='ew')
         
 
+        ## Model selection 
+        self.model_select_frame = ctk.CTkFrame (self.detection_frame, fg_color='transparent', border_color="#454545", border_width=1)
+        self.model_select_frame.grid (row=1, column=0, columnspan=3, sticky='we', padx=30, pady=20)
+
+        self.model_select_frame.columnconfigure (0, weight=1)
+        self.model_select_frame.columnconfigure (1, weight=1)
+        self.model_select_frame.rowconfigure (0, weight=1)
+
+        self.model_select_label = ctk.CTkLabel (self.model_select_frame, text="Select an inference model", font=self.STANDARD_FONT)
+        self.model_select_label.grid (row=0, column=0, pady=10, padx=10, sticky='ew')
+
+        self.model_combo = ctk.CTkComboBox (self.model_select_frame, values=self.models, variable=self.selected_model, command = lambda event: self.model_select ())
+        self.model_combo.grid (row=0, column=1, padx=40, pady=10, sticky='ew')
+
+        ## Threshold adjusments
         self.threshold_frame = ctk.CTkFrame(self.detection_frame, bg_color = 'transparent', corner_radius = 20, border_color = "#3B3B3B", border_width= 1)
-        self.threshold_frame.grid(row=1, column=0, columnspan=3, pady=5, padx=30, ipady=10, sticky='ew')
+        self.threshold_frame.grid(row=2, column=0, columnspan=3, pady=5, padx=30, ipady=10, sticky='ew')
         self.threshold_frame.columnconfigure (0, weight=1)
         self.threshold_frame.rowconfigure (0, weight=1)
         self.threshold_frame.rowconfigure (1, weight=1)
@@ -120,20 +140,22 @@ class App (ctk.CTk):
         self.detection_threshold_slider.set (self.detection_threshold)
         self.detection_threshold_slider.grid (row=0, column = 0, padx=20, pady=0, sticky = 'ew')
 
-        self.detection_threshold_value = ctk.CTkLabel (self.threshold_frame, text=f"{self.detection_threshold:.3f}", font=("Calibri", 16))
+        self.detection_threshold_value = ctk.CTkLabel (self.threshold_frame, text=f"{self.detection_threshold:.3f}", font=self.STANDARD_FONT)
         self.detection_threshold_value.grid (row=0, column = 2, padx=20, pady=0, sticky='w')
 
         self.detection_threshold_label = ctk.CTkLabel (self.threshold_frame, text="Detection Threshold", font=self.STANDARD_FONT)
-        self.detection_threshold_label.grid (row=1, column = 0, padx=10, pady=0)
+        self.detection_threshold_label.grid (row=2, column = 0, padx=10, pady=0)
 
+        ## Storage folder chooser
         self.folder_chooser_frame = ctk.CTkFrame(self.detection_frame, bg_color = 'transparent', corner_radius = 20, border_color = "#3B3B3B", border_width= 1, height=150)
-        self.folder_chooser_frame.grid (row=3, column = 0, padx=30, pady=20, columnspan=3, sticky='nsew')
+        self.folder_chooser_frame.grid (row=4, column = 0, padx=30, pady=20, columnspan=3, sticky='nsew')
 
         self.folder_chooser_button = ctk.CTkButton (self.folder_chooser_frame, text='Choose a storage directory', command=self.select_folder, font=self.STANDARD_FONT, width=130, height=40, corner_radius=20, border_color=self.bgr_to_hex(self.RECT_COLOR),  border_width=1, fg_color= 'transparent')
         self.folder_chooser_button.pack (side='left', pady=20, padx= 20)
 
         self.storage_path_label = ctk.CTkLabel (self.folder_chooser_frame, text=self.recording_storage_path, font=("Calibri", 16))
         self.storage_path_label.pack (side='left')
+
 
     def select_folder(self):
         folder_path = ctk.filedialog.askdirectory()
@@ -144,6 +166,35 @@ class App (ctk.CTk):
         self.selected_channel.set (channel)
         self.channel_label.configure (text = f"Channel {channel}")
         self.input_vcap = get_vcap (self.camera_ip_address.get (), channel = channel) 
+        if channel == 4:
+            self.channel_top_left.configure (fg_color="#00FFFF")
+            self.channel_top_right.configure (fg_color="transparent")
+            self.channel_bottom_left.configure (fg_color="transparent")
+            self.channel_bottom_right.configure (fg_color="transparent")
+        elif channel == 1:
+            self.channel_top_left.configure (fg_color="transparent")
+            self.channel_top_right.configure (fg_color="#00FFFF")
+            self.channel_bottom_left.configure (fg_color="transparent")
+            self.channel_bottom_right.configure (fg_color="transparent")
+        elif channel == 3:
+            self.channel_top_left.configure (fg_color="transparent")
+            self.channel_top_right.configure (fg_color="transparent")
+            self.channel_bottom_left.configure (fg_color="#00FFFF")
+            self.channel_bottom_right.configure (fg_color="transparent")
+        elif channel == 2:
+            self.channel_top_left.configure (fg_color="transparent")
+            self.channel_top_right.configure (fg_color="transparent")
+            self.channel_bottom_left.configure (fg_color="transparent")
+            self.channel_bottom_right.configure (fg_color="#00FFFF")
+
+
+    def model_select (self):
+        if self.selected_model.get () == 'YOLOv10 Nano':
+            self.model = load_model('Nano')
+        elif self.selected_model.get () == 'YOLOv10 Small':
+            self.model = load_model('Small') 
+        elif self.selected_model.get () == 'YOLOv10 Medium':
+            self.model = load_model ('Medium')
 
     def detection_threshold_adjust (self, value):
         self.detection_threshold = round (value, 3)
