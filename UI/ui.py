@@ -9,13 +9,19 @@ from utils.yolo_api import detect, load_model
 
 from CTkColorPicker import *
 
+
+
 class App (ctk.CTk):
 
     STANDARD_FONT = ("Calibri", 18) 
     FRAME_SCALE = .3
-    FRAME_WIDTH, FRAME_HEIGHT = (800, 600) 
+    FRAME_WIDTH, FRAME_HEIGHT = (640, 480) 
     FRAME_SIZE = (FRAME_WIDTH, FRAME_HEIGHT)
-        
+    BLACK = '#2B2B2B'
+    VIOLET_DARK = '#474554'
+    VIOLET_LIGHT = '#ACA9BB'
+    GREEN_DARK = '#26473D'
+    GREEN_LIGHT = '#55786C'    
 
     def __init__ (self, app_name="SMRIS AI Surveillance"):
         super ().__init__ ()
@@ -54,19 +60,19 @@ class App (ctk.CTk):
         self.parent_frame = ctk.CTkFrame (self, fg_color='transparent')
         self.parent_frame.pack (expand=True, fill='both', pady=40, padx = 60)
         
-        self.camera_frame = ctk.CTkFrame (self.parent_frame, corner_radius=20) 
+        self.camera_frame = ctk.CTkFrame (self.parent_frame, corner_radius=10) 
         self.camera_frame.pack (side='left', expand=False, fill='y', pady=20, padx=20)
 
         self.cam_ip_frame = ctk.CTkFrame (self.camera_frame)
         self.cam_ip_frame.pack (expand=False, fill='x', pady=20, padx=40)
 
-        self.ip_entry_field = ctk.CTkEntry (self.cam_ip_frame, textvariable=self.camera_ip_address, corner_radius = 0, font=self.STANDARD_FONT)
+        self.ip_entry_field = ctk.CTkEntry (self.cam_ip_frame, textvariable=self.camera_ip_address, corner_radius = 0, font=self.STANDARD_FONT, border_color= self.VIOLET_DARK)
         self.ip_entry_field.pack (side='left', expand=True, fill='x')
 
         self.channel_label = ctk.CTkLabel (self.camera_frame, text='Channel ' + self.selected_channel.get (), font=('Calibri', 24, 'bold')) 
         self.channel_label.pack (side='top')
 
-        self.cam_connect_button = ctk.CTkButton (self.cam_ip_frame, text="Connect", command = self.channel_select, corner_radius = 0, font=self.STANDARD_FONT, width=200)
+        self.cam_connect_button = ctk.CTkButton (self.cam_ip_frame, text="Connect", command = self.channel_select, fg_color= self.VIOLET_DARK, hover_color= self.VIOLET_LIGHT ,corner_radius = 0, font=self.STANDARD_FONT, width=200)
         self.cam_connect_button.pack (side='right', expand=False, fill='both')
 
         self.cam_view = ctk.CTkLabel (self.camera_frame, text='', corner_radius=15) 
@@ -85,31 +91,31 @@ class App (ctk.CTk):
         self.channel_selection_frame.rowconfigure (1, weight=1)
 
         top_left_icon = cv2.cvtColor(cv2.imread ("UI/gfx/TOP_LEFT.png", -1)[:-180, 100:, :], cv2.COLOR_BGR2RGBA) 
-        top_left_icon = ctk.CTkImage (dark_image=Image.fromarray(top_left_icon), size=(50, 50))
+        top_left_icon = ctk.CTkImage (dark_image=Image.fromarray(top_left_icon), size=(35, 35))
 
         top_right_icon = cv2.cvtColor(cv2.imread ("UI/gfx/TOP_RIGHT.png", -1)[:-180, :-100, :], cv2.COLOR_BGR2RGBA) 
-        top_right_icon = ctk.CTkImage (dark_image=Image.fromarray(top_right_icon), size=(50, 50))
+        top_right_icon = ctk.CTkImage (dark_image=Image.fromarray(top_right_icon), size=(35, 35))
 
         bottom_left_icon = cv2.cvtColor(cv2.imread ("UI/gfx/BOTTOM_LEFT.png", -1)[180:, 100:, :], cv2.COLOR_BGR2RGBA) 
-        bottom_left_icon = ctk.CTkImage (dark_image=Image.fromarray(bottom_left_icon), size=(50, 50))
+        bottom_left_icon = ctk.CTkImage (dark_image=Image.fromarray(bottom_left_icon), size=(35, 35))
 
         bottom_right_icon = cv2.cvtColor(cv2.imread ("UI/gfx/BOTTOM_RIGHT.png", -1)[180:, :-100, :], cv2.COLOR_BGR2RGBA) 
-        bottom_right_icon = ctk.CTkImage (dark_image=Image.fromarray(bottom_right_icon), size=(50, 50))
+        bottom_right_icon = ctk.CTkImage (dark_image=Image.fromarray(bottom_right_icon), size=(35, 35))
 
-        self.channel_top_left = ctk.CTkButton (master=self.channel_selection_frame, image=top_left_icon, text="", command=lambda : self.channel_select (4), font=self.STANDARD_FONT, fg_color='transparent', bg_color='transparent', border_color="#00FFFF", border_width=1, corner_radius=10)
+        self.channel_top_left = ctk.CTkButton (master=self.channel_selection_frame, image=top_left_icon, text="", command=lambda : self.channel_select (4), font=self.STANDARD_FONT, fg_color=self.VIOLET_DARK, bg_color='transparent', border_color=self.VIOLET_DARK, hover_color = self.VIOLET_LIGHT ,border_width=2, corner_radius=10)
         self.channel_top_left.grid (row=0, column=0, sticky='news', padx=5, pady=5)
 
-        self.channel_top_right = ctk.CTkButton (self.channel_selection_frame, image=top_right_icon, text="", command=lambda : self.channel_select (1), font=self.STANDARD_FONT, fg_color='transparent', border_color="#00FFFF", border_width=1, corner_radius=10)
+        self.channel_top_right = ctk.CTkButton (self.channel_selection_frame, image=top_right_icon, text="", command=lambda : self.channel_select (1), font=self.STANDARD_FONT, fg_color=self.VIOLET_DARK, bg_color='transparent', border_color=self.VIOLET_DARK, hover_color = self.VIOLET_LIGHT ,border_width=2, corner_radius=10)
         self.channel_top_right.grid (row=0, column=1, sticky='news', padx=5, pady=5)
 
-        self.channel_bottom_left = ctk.CTkButton (self.channel_selection_frame, image=bottom_left_icon, text="", command=lambda : self.channel_select (3), font=self.STANDARD_FONT, fg_color='transparent', border_color="#00FFFF", border_width=1, corner_radius=10)
+        self.channel_bottom_left = ctk.CTkButton (self.channel_selection_frame, image=bottom_left_icon, text="", command=lambda : self.channel_select (3), font=self.STANDARD_FONT, fg_color=self.VIOLET_DARK, bg_color='transparent', border_color=self.VIOLET_DARK, hover_color = self.VIOLET_LIGHT, border_width=2, corner_radius=10)
         self.channel_bottom_left.grid (row=1, column=0, sticky='news', padx=5, pady=5)
 
-        self.channel_bottom_right = ctk.CTkButton (self.channel_selection_frame, image=bottom_right_icon, text="", command=lambda : self.channel_select (2), font=self.STANDARD_FONT, fg_color='transparent', border_color="#00FFFF", border_width=1, corner_radius=10)
+        self.channel_bottom_right = ctk.CTkButton (self.channel_selection_frame, image=bottom_right_icon, text="", command=lambda : self.channel_select (2), font=self.STANDARD_FONT, fg_color=self.VIOLET_DARK, bg_color='transparent', border_color=self.VIOLET_DARK, hover_color = self.VIOLET_LIGHT, border_width=2, corner_radius=10)
         self.channel_bottom_right.grid (row=1, column=1, sticky='news', padx=5, pady=5)
 
         ### Detection control 
-        self.detection_frame = ctk.CTkFrame (self.parent_frame, bg_color='transparent', corner_radius=20)
+        self.detection_frame = ctk.CTkFrame (self.parent_frame, bg_color='transparent', corner_radius=10)
         self.detection_frame.pack (side='right', pady=20, padx=20, expand=True, fill='x')
 
         self.detection_frame.columnconfigure (0, weight=1)
@@ -121,7 +127,7 @@ class App (ctk.CTk):
         self.detection_frame.rowconfigure (3, weight=1)
         self.detection_frame.rowconfigure (4, weight=1)
 
-        self.detection_toggle = ctk.CTkSwitch(self.detection_frame, text='Enable detection', variable=self.detection_enabled, switch_width=50, command=self.toggle_detection, font=self.STANDARD_FONT, progress_color= '#1D4C86', button_color='#6DA9F5') 
+        self.detection_toggle = ctk.CTkSwitch(self.detection_frame, text='Enable detection', variable=self.detection_enabled, switch_width=50, command=self.toggle_detection, font=self.STANDARD_FONT, fg_color= self.VIOLET_DARK, progress_color= self.VIOLET_LIGHT) 
         self.detection_toggle.grid (row=0, column = 0, pady= 20, padx = 50, columnspan=1, sticky='w')
 
         self.detection_frame_color_button = ctk.CTkButton(self.detection_frame, text="Detection frame color", command=self.color_picker, font=self.STANDARD_FONT, width=130, height=40, corner_radius=20, border_color=self.bgr_to_hex(self.RECT_COLOR),  border_width=1, fg_color= 'transparent')
@@ -149,7 +155,7 @@ class App (ctk.CTk):
         self.threshold_frame.rowconfigure (0, weight=1)
         self.threshold_frame.rowconfigure (1, weight=1)
 
-        self.detection_threshold_slider = ctk.CTkSlider(master=self.threshold_frame, from_=0.2, to=.95, command= self.detection_threshold_adjust, width = 400, button_color = '#6DA9F5', progress_color= '#1D4C86') 
+        self.detection_threshold_slider = ctk.CTkSlider(master=self.threshold_frame, from_=0.2, to=.95, command= self.detection_threshold_adjust, width = 400, button_color = '#FFFFFF', button_hover_color='#FFFFFF', progress_color= self.VIOLET_LIGHT) 
         self.detection_threshold_slider.set (self.detection_threshold)
         self.detection_threshold_slider.grid (row=0, column = 0, padx=20, pady=0, sticky = 'ew')
 
@@ -163,7 +169,7 @@ class App (ctk.CTk):
         self.folder_chooser_frame = ctk.CTkFrame(self.detection_frame, bg_color = 'transparent', corner_radius = 20, border_color = "#3B3B3B", border_width= 1, height=150)
         self.folder_chooser_frame.grid (row=4, column = 0, padx=30, pady=20, columnspan=3, sticky='nsew')
 
-        self.folder_chooser_button = ctk.CTkButton (self.folder_chooser_frame, text='Choose a storage directory', command=self.select_folder, font=self.STANDARD_FONT, width=130, height=40, corner_radius=20, border_color=self.bgr_to_hex(self.RECT_COLOR),  border_width=1, fg_color= 'transparent')
+        self.folder_chooser_button = ctk.CTkButton (self.folder_chooser_frame, text='Choose a storage directory', command=self.select_folder, font=self.STANDARD_FONT, width=130, height=40, corner_radius=20, border_color=self.VIOLET_DARK,border_width=1, fg_color= self.VIOLET_DARK)
         self.folder_chooser_button.pack (side='left', pady=20, padx= 20)
 
         self.storage_path_label = ctk.CTkLabel (self.folder_chooser_frame, text=self.recording_storage_path, font=self.STANDARD_FONT)
@@ -180,25 +186,25 @@ class App (ctk.CTk):
         self.channel_label.configure (text = f"Channel {channel}")
         self.input_vcap = get_vcap (self.camera_ip_address.get (), channel = channel) 
         if channel == 4:
-            self.channel_top_left.configure (fg_color="#00FFFF")
-            self.channel_top_right.configure (fg_color="transparent")
-            self.channel_bottom_left.configure (fg_color="transparent")
-            self.channel_bottom_right.configure (fg_color="transparent")
+            self.channel_top_left.configure (fg_color=self.VIOLET_LIGHT)
+            self.channel_top_right.configure (fg_color=self.VIOLET_DARK)
+            self.channel_bottom_left.configure (fg_color=self.VIOLET_DARK)
+            self.channel_bottom_right.configure (fg_color=self.VIOLET_DARK)
         elif channel == 1:
-            self.channel_top_left.configure (fg_color="transparent")
-            self.channel_top_right.configure (fg_color="#00FFFF")
-            self.channel_bottom_left.configure (fg_color="transparent")
-            self.channel_bottom_right.configure (fg_color="transparent")
+            self.channel_top_left.configure (fg_color=self.VIOLET_DARK)
+            self.channel_top_right.configure (fg_color=self.VIOLET_LIGHT)
+            self.channel_bottom_left.configure (fg_color=self.VIOLET_DARK)
+            self.channel_bottom_right.configure (fg_color=self.VIOLET_DARK)
         elif channel == 3:
-            self.channel_top_left.configure (fg_color="transparent")
-            self.channel_top_right.configure (fg_color="transparent")
-            self.channel_bottom_left.configure (fg_color="#00FFFF")
-            self.channel_bottom_right.configure (fg_color="transparent")
+            self.channel_top_left.configure (fg_color=self.VIOLET_DARK)
+            self.channel_top_right.configure (fg_color=self.VIOLET_DARK)
+            self.channel_bottom_left.configure (fg_color=self.VIOLET_LIGHT)
+            self.channel_bottom_right.configure (fg_color=self.VIOLET_DARK)
         elif channel == 2:
-            self.channel_top_left.configure (fg_color="transparent")
-            self.channel_top_right.configure (fg_color="transparent")
-            self.channel_bottom_left.configure (fg_color="transparent")
-            self.channel_bottom_right.configure (fg_color="#00FFFF")
+            self.channel_top_left.configure (fg_color=self.VIOLET_DARK)
+            self.channel_top_right.configure (fg_color=self.VIOLET_DARK)
+            self.channel_bottom_left.configure (fg_color=self.VIOLET_DARK)
+            self.channel_bottom_right.configure (fg_color=self.VIOLET_LIGHT)
 
 
     def model_select (self):
