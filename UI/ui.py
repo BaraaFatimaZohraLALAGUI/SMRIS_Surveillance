@@ -1,6 +1,6 @@
 import datetime
 import customtkinter as ctk 
-import tkinter as tk
+import numpy as np
 from PIL import Image 
 import cv2
 from db.db_manager import insert_record
@@ -30,14 +30,14 @@ class App (ctk.CTk):
         self.bind('<Escape>', lambda e: self.quit()) 
 
         self.channels = ['1', '2', '3', '4']
-        self.models = ['YOLOv10 Nano', 'YOLOv10 Small', 'YOLOv10 Medium']
+        self.models = ['YOLOv9 Tiny', 'YOLOv10 Nano', 'YOLOv10 Small', 'YOLOv10 Medium', 'YOLOv10 Big', 'YOLOv10 Large', 'YOLOv10 Extra Large']
 
         self.selected_channel = ctk.StringVar (value=self.channels[3])
 
         self.selected_model = ctk.StringVar (value=self.models[0])
         self.detection_enabled = ctk.BooleanVar (value=False)
 
-        self.model = load_model('Nano')
+        self.model = load_model('YOLOv9 Tiny')
 
         self.detection_threshold = .25
         self.current_rec_frame_count = 0
@@ -48,7 +48,7 @@ class App (ctk.CTk):
         self.input_vcap = get_vcap (self.camera_ip_address.get (), channel = 1) # int (self.selected_channel.get ())
         self.out_cap = None
 
-        self.recording_behavior = ctk.StringVar (value="")
+        self.recording_behavior = ctk.StringVar (value="Recording off") # 'Recording off', 'Continuous recording', 'Only on detection'
         self.recording_storage_path = 'captures_out2'
 
     def run (self):
@@ -59,10 +59,20 @@ class App (ctk.CTk):
 
     def ui_setup (self):
         self.parent_frame = ctk.CTkFrame (self, fg_color='transparent')
-        self.parent_frame.pack (expand=True, fill='both', pady=40, padx = 60)
+        self.parent_frame.pack (expand=True, fill='both', pady=20, padx = 60)
+
+
+        logo = cv2.cvtColor(cv2.imread ("UI/gfx/smris_surveillance_logo.png", -1), cv2.COLOR_BGR2RGBA) 
+        logo = ctk.CTkImage (dark_image=Image.fromarray(logo), size=(np.array (logo.shape[:2][::-1]) * .4).tolist ())
+
+        self.logo_frame = ctk.CTkFrame (self.parent_frame, fg_color='transparent')
+        self.logo_frame.pack (side='top', expand=False, fill='x', pady=0, ipady=0)
+        self.logo_label = ctk.CTkLabel (self.logo_frame, text='', image=logo, fg_color='transparent', bg_color='transparent')
+        self.logo_label.pack (side='left', expand=False, padx=0, pady=0, ipady=0)
+
         
         self.camera_frame = ctk.CTkFrame (self.parent_frame, corner_radius=10) 
-        self.camera_frame.pack (side='left', expand=False, fill='y', pady=20, padx=20)
+        self.camera_frame.pack (side='left', expand=False, fill='y', pady=10, padx=20)
 
         self.cam_ip_frame = ctk.CTkFrame (self.camera_frame)
         self.cam_ip_frame.pack (expand=False, fill='x', pady=20, padx=40)
@@ -117,7 +127,7 @@ class App (ctk.CTk):
 
         ### Detection control 
         self.detection_frame = ctk.CTkFrame (self.parent_frame, bg_color='transparent', corner_radius=10)
-        self.detection_frame.pack (side='right', pady=20, padx=20, expand=True, fill='x')
+        self.detection_frame.pack (side='right', pady=10, padx=20, expand=True, fill='x')
 
         self.detection_frame.columnconfigure (0, weight=1)
         self.detection_frame.columnconfigure (1, weight=1)
@@ -167,7 +177,8 @@ class App (ctk.CTk):
         self.detection_threshold_label = ctk.CTkLabel (self.threshold_frame, text="Detection Threshold", font=self.STANDARD_FONT)
         self.detection_threshold_label.grid (row=2, column = 0, padx=10, pady=0)
 
-        self.recording_segmented_buttons = ctk.CTkSegmentedButton (self.detection_frame, selected_color=self.VIOLET_LIGHT, border_width=1, font=self.STANDARD_FONT, values=['Recording off', 'Continuous recording', 'Only on detection'], unselected_color="#474554", height=40, selected_hover_color=self.VIOLET_LIGHT, variable=self.recording_behavior)
+        ## Recording behavior
+        self.recording_segmented_buttons = ctk.CTkSegmentedButton (self.detection_frame, selected_color=self.VIOLET_LIGHT, border_width=1, font=self.STANDARD_FONT, values=['Recording off', 'Continuous recording', 'Only on detection'], unselected_color="#333333", height=40, selected_hover_color=self.VIOLET_LIGHT, variable=self.recording_behavior)
         self.recording_segmented_buttons.grid (row=4, column = 0, padx=30, pady=20, columnspan=3, sticky='nsew')
 
         ## Storage folder chooser
@@ -192,33 +203,28 @@ class App (ctk.CTk):
         self.input_vcap = get_vcap (self.camera_ip_address.get (), channel = channel) 
         if channel == 4:
             self.channel_top_left.configure (fg_color=self.VIOLET_LIGHT)
-            self.channel_top_right.configure (fg_color=self.VIOLET_DARK)
-            self.channel_bottom_left.configure (fg_color=self.VIOLET_DARK)
-            self.channel_bottom_right.configure (fg_color=self.VIOLET_DARK)
+            self.channel_top_right.configure (fg_color="transparent")
+            self.channel_bottom_left.configure (fg_color="transparent")
+            self.channel_bottom_right.configure (fg_color="transparent")
         elif channel == 1:
-            self.channel_top_left.configure (fg_color=self.VIOLET_DARK)
+            self.channel_top_left.configure (fg_color="transparent")
             self.channel_top_right.configure (fg_color=self.VIOLET_LIGHT)
-            self.channel_bottom_left.configure (fg_color=self.VIOLET_DARK)
-            self.channel_bottom_right.configure (fg_color=self.VIOLET_DARK)
+            self.channel_bottom_left.configure (fg_color="transparent")
+            self.channel_bottom_right.configure (fg_color="transparent")
         elif channel == 3:
-            self.channel_top_left.configure (fg_color=self.VIOLET_DARK)
-            self.channel_top_right.configure (fg_color=self.VIOLET_DARK)
+            self.channel_top_left.configure (fg_color="transparent")
+            self.channel_top_right.configure (fg_color="transparent")
             self.channel_bottom_left.configure (fg_color=self.VIOLET_LIGHT)
-            self.channel_bottom_right.configure (fg_color=self.VIOLET_DARK)
+            self.channel_bottom_right.configure (fg_color="transparent")
         elif channel == 2:
-            self.channel_top_left.configure (fg_color=self.VIOLET_DARK)
-            self.channel_top_right.configure (fg_color=self.VIOLET_DARK)
-            self.channel_bottom_left.configure (fg_color=self.VIOLET_DARK)
+            self.channel_top_left.configure (fg_color="transparent")
+            self.channel_top_right.configure (fg_color="transparent")
+            self.channel_bottom_left.configure (fg_color="transparent")
             self.channel_bottom_right.configure (fg_color=self.VIOLET_LIGHT)
 
 
     def model_select (self):
-        if self.selected_model.get () == 'YOLOv10 Nano':
-            self.model = load_model('Nano')
-        elif self.selected_model.get () == 'YOLOv10 Small':
-            self.model = load_model('Small') 
-        elif self.selected_model.get () == 'YOLOv10 Medium':
-            self.model = load_model ('Medium')
+        self.model = load_model(self.selected_model.get ())
 
     def detection_threshold_adjust (self, value):
         self.detection_threshold = round (value, 3)
@@ -268,28 +274,25 @@ class App (ctk.CTk):
                     insert_record(self.out_path, self.current_rec_frame_count, timestamp)
                     self.current_rec_frame_count = 0
                     self.out_cap.release()
-                    
-            opencv_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA) 
-        
-            # Capture the latest frame and transform to image 
-            pil_image = Image.fromarray(opencv_image) 
+            elif self.out_cap is not None and self.out_cap.isOpened ():
+                insert_record(self.out_path, self.current_rec_frame_count, timestamp)
+                self.current_rec_frame_count = 0
+                self.out_cap.release()
 
-            photo_image = ctk.CTkImage (dark_image=pil_image, size=self.FRAME_SIZE)
-        
-            # Displaying photoimage in the label 
-            self.cam_view.photo_image = photo_image 
-        
-            # Configure image in the label 
+            # if self.recording_behavior.get () == 'Continuous recording': # 'Recording off', 'Continuous recording', 'Only on detection'
+                    
+            opencv_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) 
+
+            photo_image = ctk.CTkImage (dark_image=Image.fromarray(opencv_image) , size=self.FRAME_SIZE)
+            # self.cam_view.photo_image = photo_image 
             self.cam_view.configure(image=photo_image) 
+
         elif display_frame == None or ret == False:
-            self.cam_view['text'] = 'Empty frame'
+            self.cam_view.configure (text = 'Empty frame')
+            self.cam_view.configure(image=None) 
     
-        self.cam_view.after(5, self.open_camera) 
+        self.cam_view.after(1, self.open_camera) 
 
     def cleanup (self):
         self.input_vcap.release ()
 
-
-if __name__ == '__main__':
-    app = App ()
-    app.run ()

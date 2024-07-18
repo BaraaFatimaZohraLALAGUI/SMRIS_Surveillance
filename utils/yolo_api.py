@@ -20,6 +20,6 @@ def detect(frame, model, detection_threshold, rect_color):
             
     return people_found
     
-models = {'Nano' : 'models\\yolov10n.pt', 'Small' : 'models\\yolov10s.pt', 'Medium' : 'models\\yolov10m.pt'}
-def load_model (model_name='Nano'):
+models = {'YOLOv9 Tiny': 'models\\yolov9t.pt', 'YOLOv10 Nano' : 'models\\yolov10n.pt', 'YOLOv10 Small' : 'models\\yolov10s.pt', 'YOLOv10 Medium' : 'models\\yolov10m.pt', 'YOLOv10 Big' : 'models\\yolov10b.pt', 'YOLOv10 Large' : 'models\\yolov10l.pt', 'YOLOv10 Extra Large' : 'models\\yolov10x.pt'}
+def load_model (model_name='YOLOv9 Tiny'):
     return YOLO (models[model_name])
