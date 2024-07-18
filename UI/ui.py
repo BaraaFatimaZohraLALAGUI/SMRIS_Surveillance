@@ -103,16 +103,16 @@ class App (ctk.CTk):
         bottom_right_icon = cv2.cvtColor(cv2.imread ("UI/gfx/BOTTOM_RIGHT.png", -1)[180:, :-100, :], cv2.COLOR_BGR2RGBA) 
         bottom_right_icon = ctk.CTkImage (dark_image=Image.fromarray(bottom_right_icon), size=(35, 35))
 
-        self.channel_top_left = ctk.CTkButton (master=self.channel_selection_frame, image=top_left_icon, text="", command=lambda : self.channel_select (4), font=self.STANDARD_FONT, fg_color=self.VIOLET_DARK, bg_color='transparent', border_color=self.VIOLET_DARK, hover_color = self.VIOLET_LIGHT ,border_width=2, corner_radius=10)
+        self.channel_top_left = ctk.CTkButton (master=self.channel_selection_frame, image=top_left_icon, text="", command=lambda : self.channel_select (4), font=self.STANDARD_FONT, fg_color='transparent', bg_color='transparent', border_color=self.VIOLET_DARK, hover_color = self.VIOLET_LIGHT ,border_width=2, corner_radius=10)
         self.channel_top_left.grid (row=0, column=0, sticky='news', padx=5, pady=5)
 
-        self.channel_top_right = ctk.CTkButton (self.channel_selection_frame, image=top_right_icon, text="", command=lambda : self.channel_select (1), font=self.STANDARD_FONT, fg_color=self.VIOLET_DARK, bg_color='transparent', border_color=self.VIOLET_DARK, hover_color = self.VIOLET_LIGHT ,border_width=2, corner_radius=10)
+        self.channel_top_right = ctk.CTkButton (self.channel_selection_frame, image=top_right_icon, text="", command=lambda : self.channel_select (1), font=self.STANDARD_FONT, fg_color='transparent', bg_color='transparent', border_color=self.VIOLET_DARK, hover_color = self.VIOLET_LIGHT ,border_width=2, corner_radius=10)
         self.channel_top_right.grid (row=0, column=1, sticky='news', padx=5, pady=5)
 
-        self.channel_bottom_left = ctk.CTkButton (self.channel_selection_frame, image=bottom_left_icon, text="", command=lambda : self.channel_select (3), font=self.STANDARD_FONT, fg_color=self.VIOLET_DARK, bg_color='transparent', border_color=self.VIOLET_DARK, hover_color = self.VIOLET_LIGHT, border_width=2, corner_radius=10)
+        self.channel_bottom_left = ctk.CTkButton (self.channel_selection_frame, image=bottom_left_icon, text="", command=lambda : self.channel_select (3), font=self.STANDARD_FONT, fg_color='transparent', bg_color='transparent', border_color=self.VIOLET_DARK, hover_color = self.VIOLET_LIGHT, border_width=2, corner_radius=10)
         self.channel_bottom_left.grid (row=1, column=0, sticky='news', padx=5, pady=5)
 
-        self.channel_bottom_right = ctk.CTkButton (self.channel_selection_frame, image=bottom_right_icon, text="", command=lambda : self.channel_select (2), font=self.STANDARD_FONT, fg_color=self.VIOLET_DARK, bg_color='transparent', border_color=self.VIOLET_DARK, hover_color = self.VIOLET_LIGHT, border_width=2, corner_radius=10)
+        self.channel_bottom_right = ctk.CTkButton (self.channel_selection_frame, image=bottom_right_icon, text="", command=lambda : self.channel_select (2), font=self.STANDARD_FONT,  fg_color='transparent', bg_color='transparent', border_color=self.VIOLET_DARK, hover_color = self.VIOLET_LIGHT, border_width=2, corner_radius=10)
         self.channel_bottom_right.grid (row=1, column=1, sticky='news', padx=5, pady=5)
 
         ### Detection control 
@@ -167,7 +167,7 @@ class App (ctk.CTk):
         self.detection_threshold_label = ctk.CTkLabel (self.threshold_frame, text="Detection Threshold", font=self.STANDARD_FONT)
         self.detection_threshold_label.grid (row=2, column = 0, padx=10, pady=0)
 
-        self.recording_segmented_buttons = ctk.CTkSegmentedButton (self.detection_frame, selected_color=self.VIOLET_LIGHT, border_width=1, font=self.STANDARD_FONT, values=['Recording off', 'Continuous recording', 'Only on detection'], unselected_color="#474554", height=40, corner_radius=10, selected_hover_color=self.VIOLET_LIGHT, variable=self.recording_behavior)
+        self.recording_segmented_buttons = ctk.CTkSegmentedButton (self.detection_frame, selected_color=self.VIOLET_LIGHT, border_width=1, font=self.STANDARD_FONT, values=['Recording off', 'Continuous recording', 'Only on detection'], unselected_color="#474554", height=40, selected_hover_color=self.VIOLET_LIGHT, variable=self.recording_behavior)
         self.recording_segmented_buttons.grid (row=4, column = 0, padx=30, pady=20, columnspan=3, sticky='nsew')
 
         ## Storage folder chooser
