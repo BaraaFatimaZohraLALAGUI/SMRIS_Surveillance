@@ -35,3 +35,6 @@ def get_record_by_time_range(start_time, end_time):
     end_time = datetime.datetime(end_time.year, end_time.month, end_time.day, end_time.hour, end_time.minute, end_time.second, 000000)
     
     return db.records.find({"Timestamp": {'$gte': start_time, '$lte': end_time}})
+
+def get_records_all():
+    return db.records.find().sort({"Timestamp": -1}).limit(20)

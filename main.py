@@ -1,6 +1,6 @@
 
 
-from UI.ui import App
+from UI.app import App
 
 
 if __name__ == '__main__':
