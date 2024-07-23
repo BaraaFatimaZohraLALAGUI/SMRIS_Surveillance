@@ -3,6 +3,7 @@ import customtkinter as ctk
 import numpy as np
 from PIL import Image 
 import cv2
+from UI.SpinBox import IntSpinbox
 from db.db_manager import insert_record
 from utils.cam_functions import get_vcap, setup_output_stream
 from utils.yolo_api import detect, load_model 
@@ -31,9 +32,10 @@ class App (ctk.CTk):
 
         self.channels = ['1', '2', '3', '4']
         self.models = ['YOLOv9 Tiny', 'YOLOv10 Nano', 'YOLOv10 Small', 'YOLOv10 Medium', 'YOLOv10 Big', 'YOLOv10 Large', 'YOLOv10 Extra Large']
+        
 
         self.selected_channel = ctk.StringVar (value=self.channels[3])
-
+        
         self.selected_model = ctk.StringVar (value=self.models[0])
         self.detection_enabled = ctk.BooleanVar (value=False)
 
@@ -50,6 +52,9 @@ class App (ctk.CTk):
 
         self.recording_behavior = ctk.StringVar (value="Recording off") # 'Recording off', 'Continuous recording', 'Only on detection'
         self.recording_storage_path = 'captures_out2'
+
+        self.bg_substraction_methods = ['Mixture-of-Gaussian - MoG', 'MoG2']
+        self.background_substractor = cv2.bgsegm.createBackgroundSubtractorMOG(history=200, nmixtures=3, backgroundRatio=.95, noiseSigma=10)
 
     def run (self):
         self.ui_setup ()
@@ -88,9 +93,6 @@ class App (ctk.CTk):
 
         self.cam_view = ctk.CTkLabel (self.camera_frame, text='', corner_radius=15) 
         self.cam_view.pack(expand=False, fill='x', pady=15, padx=40, side='top') 
-
-        # self.channel_combo = ctk.CTkComboBox (self.camera_frame, values=self.channels, variable=self.selected_channel, command = lambda event: self.channel_select ())
-        # self.channel_combo.pack (side='top')
 
         # Channel selection buttons 
         self.channel_selection_frame = ctk.CTkFrame (self.camera_frame, fg_color='transparent')
@@ -140,29 +142,63 @@ class App (ctk.CTk):
         self.detection_frame.rowconfigure (5, weight=1)
 
         self.detection_toggle = ctk.CTkSwitch(self.detection_frame, text='Enable detection', variable=self.detection_enabled, switch_width=50, command=self.toggle_detection, font=self.STANDARD_FONT, fg_color= self.VIOLET_DARK, progress_color= self.VIOLET_LIGHT) 
-        self.detection_toggle.grid (row=0, column = 0, pady= 20, padx = 50, columnspan=1, sticky='w')
+        self.detection_toggle.grid (row=0, column = 0, pady= 20, padx = 40, columnspan=1, sticky='w')
 
         self.detection_frame_color_button = ctk.CTkButton(self.detection_frame, text="Detection frame color", command=self.color_picker, font=self.STANDARD_FONT, width=130, height=40, corner_radius=20, border_color=self.bgr_to_hex(self.RECT_COLOR),  border_width=1, fg_color= 'transparent')
         self.detection_frame_color_button.grid(row=0, column=1, pady=20, padx=30, columnspan=2, sticky='ew')
         
+        # Background substraction
+        bgSub_frame = ctk.CTkFrame (self.detection_frame, fg_color='transparent', border_color="#454545", border_width=1)
+        bgSub_frame.grid (row=1, column=0, columnspan=3, sticky='news', padx=30, pady=10)
+        bgSub_frame.columnconfigure (0, weight=1)
+        bgSub_frame.columnconfigure (1, weight=1)
+        bgSub_frame.rowconfigure (0, weight=1)
+        bgSub_frame.rowconfigure (1, weight=1)
+        bgSub_frame.rowconfigure (2, weight=1)
+
+        self.bgSub_toggle_var = ctk.BooleanVar (value=True)
+        self.bgSub_toggle = ctk.CTkSwitch(bgSub_frame, text='Enable background substraction', switch_width=50, command=self.toggle_bgSub, font=self.STANDARD_FONT, fg_color= self.VIOLET_DARK, progress_color= self.VIOLET_LIGHT, variable=self.bgSub_toggle_var) 
+        self.bgSub_toggle.grid (row=0, column = 0, pady= 10, padx = 10, columnspan=2, sticky='w')
+
+        self.bgSub_label = ctk.CTkLabel (bgSub_frame, text= 'Select a background substraction method', font=self.STANDARD_FONT)
+        self.bgSub_label.grid (row=1, column=0, pady=10, padx=10, sticky='w')
+
+        self.bgSub_combo = ctk.CTkComboBox (bgSub_frame, values=self.bg_substraction_methods, font=self.STANDARD_FONT, width=450, command=self.select_bgSubstractor, dropdown_font=self.STANDARD_FONT)
+        self.bgSub_combo.grid (row=1, column=1, padx=20, pady=10, sticky='e')
+
+        self.bgSub_view = ctk.CTkLabel (bgSub_frame, text='', corner_radius=15) 
+        self.bgSub_view.grid (row=2, column = 1, pady= 10, padx = 5, sticky='news')
+
+        self.MOG_params_frame = ctk.CTkFrame (bgSub_frame)
+        self.MOG_params_frame.grid (row=2, column = 0, pady= 10, padx = 5, sticky='news')
+
+        self.MOG_params_frame.columnconfigure (0, weight=1)
+        self.MOG_params_frame.columnconfigure (1, weight=1)
+        self.MOG_params_frame.rowconfigure (0, weight=1)
+
+        history_label = ctk.CTkLabel (self.MOG_params_frame, text= "Number of history entries", font=self.STANDARD_FONT)
+        history_label.grid (row=0, column=0, padx=20, pady=20, sticky='w')
+        self.history_spinbox = IntSpinbox(self.MOG_params_frame, width=150, step_size=1)
+        self.history_spinbox.grid(row=0, column=1, padx=20, pady=20, sticky='ew')
+
 
         ## Model selection 
         self.model_select_frame = ctk.CTkFrame (self.detection_frame, fg_color='transparent', border_color="#454545", border_width=1)
-        self.model_select_frame.grid (row=1, column=0, columnspan=3, sticky='we', padx=30, pady=20)
+        self.model_select_frame.grid (row=2, column=0, columnspan=3, sticky='we', padx=30, pady=10)
 
         self.model_select_frame.columnconfigure (0, weight=1)
         self.model_select_frame.columnconfigure (1, weight=1)
         self.model_select_frame.rowconfigure (0, weight=1)
 
         self.model_select_label = ctk.CTkLabel (self.model_select_frame, text="Select an inference model", font=self.STANDARD_FONT)
-        self.model_select_label.grid (row=0, column=0, pady=10, padx=10, sticky='ew')
+        self.model_select_label.grid (row=0, column=0, pady=10, padx=10, sticky='w')
 
-        self.model_combo = ctk.CTkComboBox (self.model_select_frame, values=self.models, variable=self.selected_model, command = lambda event: self.model_select ())
-        self.model_combo.grid (row=0, column=1, padx=40, pady=10, sticky='ew')
+        self.model_combo = ctk.CTkComboBox (self.model_select_frame, values=self.models, variable=self.selected_model, command = lambda event: self.model_select (), width=450)
+        self.model_combo.grid (row=0, column=1, padx=20, pady=10, sticky='e')
 
         ## Threshold adjusments
         self.threshold_frame = ctk.CTkFrame(self.detection_frame, bg_color = 'transparent', corner_radius = 20, border_color = "#3B3B3B", border_width= 1)
-        self.threshold_frame.grid(row=2, column=0, columnspan=3, pady=5, padx=30, ipady=10, sticky='ew')
+        self.threshold_frame.grid(row=3, column=0, columnspan=3, pady=5, padx=30, ipady=10, sticky='ew')
         self.threshold_frame.columnconfigure (0, weight=1)
         self.threshold_frame.rowconfigure (0, weight=1)
         self.threshold_frame.rowconfigure (1, weight=1)
@@ -197,6 +233,12 @@ class App (ctk.CTk):
         if folder_path == "": return
         self.storage_path_label.configure (text=folder_path.replace ('/', '\\'))
 
+    def toggle_bgSub (self):
+        if not self.bgSub_toggle.get ():
+            self.bgSub_view.grid_remove ()
+        else:
+            self.bgSub_view.grid ()
+
     def channel_select (self, channel=1):
         self.selected_channel.set (channel)
         self.channel_label.configure (text = f"Channel {channel}")
@@ -225,6 +267,12 @@ class App (ctk.CTk):
 
     def model_select (self):
         self.model = load_model(self.selected_model.get ())
+
+    def select_bgSubstractor (self, event):
+        if self.bgSub_combo.get () == "Mixture-of-Gaussian - MoG":
+             self.background_substractor = cv2.bgsegm.createBackgroundSubtractorMOG(history=200, nmixtures=3, backgroundRatio=.95, noiseSigma=10)
+        elif self.bgSub_combo.get () == "MoG2":
+            self.background_substractor = cv2.createBackgroundSubtractorMOG2(history = 200, detectShadows = False, varThreshold=300)
 
     def detection_threshold_adjust (self, value):
         self.detection_threshold = round (value, 3)
@@ -260,6 +308,11 @@ class App (ctk.CTk):
         display_frame = None
         if ret:
             frame = cv2.resize(frame, self.FRAME_SIZE) 
+
+            if self.bgSub_toggle.get ():
+                fgMask = self.background_substractor.apply(frame)
+                photo_image = ctk.CTkImage (dark_image=Image.fromarray(fgMask) , size=(250, 250))
+                self.bgSub_view.configure(image=photo_image) 
             
             # Check if we should detect people or stream raw video frames
             if self.detection_enabled.get ():
@@ -291,7 +344,8 @@ class App (ctk.CTk):
             self.cam_view.configure (text = 'Empty frame')
             self.cam_view.configure(image=None) 
     
-        self.cam_view.after(1, self.open_camera) 
+        self.cam_view.after(30, self.open_camera) 
+
 
     def cleanup (self):
         self.input_vcap.release ()
