@@ -1,6 +1,5 @@
 from db.db_config import db 
 import datetime
-from datetime import timezone
 
 def insert_record(record_path, frames_num, timestamp):
     record = {
@@ -9,7 +8,6 @@ def insert_record(record_path, frames_num, timestamp):
         "Timestamp": timestamp,
     }
     res = db.records.insert_one(record)
-    # print(f"record inserted with id --- {res.inserted_id}")
     return res.inserted_id
 
 def get_record_by_date_range(date):
@@ -38,3 +36,9 @@ def get_record_by_time_range(start_time, end_time):
 
 def get_records_all():
     return db.records.find().sort({"Timestamp": -1}).limit(20)
+
+def delete_record(record):
+    try:
+        db.records.delete_one(record)
+    except :
+        print('row deletion failed !')
