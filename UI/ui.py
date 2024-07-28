@@ -7,8 +7,8 @@ from UI.SpinBox import IntSpinbox
 from db.db_manager import insert_record
 from utils.cam_functions import get_vcap, setup_output_stream
 from utils.yolo_api import detect, load_model 
-
 from CTkColorPicker import *
+
 
 
 
@@ -53,8 +53,12 @@ class App (ctk.CTk):
         self.recording_behavior = ctk.StringVar (value="Recording off") # 'Recording off', 'Continuous recording', 'Only on detection'
         self.recording_storage_path = 'captures_out2'
 
+        ## Background Substratction
         self.bg_substraction_methods = ['Mixture-of-Gaussian - MoG', 'MoG2']
-        self.background_substractor = cv2.bgsegm.createBackgroundSubtractorMOG(history=200, nmixtures=3, backgroundRatio=.95, noiseSigma=10)
+        self.bgSub_history_states = 200
+        self.background_substractor = cv2.bgsegm.createBackgroundSubtractorMOG(history=self.bgSub_history_states, nmixtures=3, backgroundRatio=.95, noiseSigma=10)
+        self.bgSub_MOG_nGaussians = 5
+        self.bgSub_MOG_bgRatio = .85
 
     def run (self):
         self.ui_setup ()
@@ -169,17 +173,30 @@ class App (ctk.CTk):
         self.bgSub_view = ctk.CTkLabel (bgSub_frame, text='', corner_radius=15) 
         self.bgSub_view.grid (row=2, column = 1, pady= 10, padx = 5, sticky='news')
 
+        # BG MOG PARAMETERS 
         self.MOG_params_frame = ctk.CTkFrame (bgSub_frame)
         self.MOG_params_frame.grid (row=2, column = 0, pady= 10, padx = 5, sticky='news')
 
         self.MOG_params_frame.columnconfigure (0, weight=1)
         self.MOG_params_frame.columnconfigure (1, weight=1)
-        self.MOG_params_frame.rowconfigure (0, weight=1)
+        self.MOG_params_frame.rowconfigure ((0, 1, 2), weight=1)
 
         history_label = ctk.CTkLabel (self.MOG_params_frame, text= "Number of history entries", font=self.STANDARD_FONT)
-        history_label.grid (row=0, column=0, padx=20, pady=20, sticky='w')
-        self.history_spinbox = IntSpinbox(self.MOG_params_frame, width=150, step_size=1)
-        self.history_spinbox.grid(row=0, column=1, padx=20, pady=20, sticky='ew')
+        history_label.grid (row=0, column=0, padx=20, pady=5, sticky='w')
+        self.history_spinbox = IntSpinbox(self.MOG_params_frame, width=150, step_size=1, value=self.bgSub_history_states, button_color=self.VIOLET_DARK, button_hover_color=self.VIOLET_LIGHT, command=self.history_spinbox_callback)
+        self.history_spinbox.grid(row=0, column=1, padx=20, pady=5, sticky='ew')
+
+        nGaussian_mixtures = ctk.CTkLabel (self.MOG_params_frame, text= "Number of Gaussian mixtures", font=self.STANDARD_FONT)
+        nGaussian_mixtures.grid (row=1, column=0, padx=20, pady=5, sticky='w')
+        self.nGaussian_mixtures_spinbox = IntSpinbox(self.MOG_params_frame, width=150, step_size=1, value=self.bgSub_MOG_nGaussians, button_color=self.VIOLET_DARK, button_hover_color=self.VIOLET_LIGHT, command=self.nGaussians_spinbox_callback)
+        self.nGaussian_mixtures_spinbox.grid(row=1, column=1, padx=20, pady=5, sticky='ew')
+
+        bgSub_bgRatio_label = ctk.CTkLabel (self.MOG_params_frame, text= "Background ratio", font=self.STANDARD_FONT)
+        bgSub_bgRatio_label.grid (row=2, column=0, padx=20, pady=5, sticky='w')
+
+        self.bgSub_bgRatio_slider = ctk.CTkSlider(master=self.MOG_params_frame, from_=0, to=1, command= self.bgRatio_slider_callback, width = 150, button_color = '#FFFFFF', button_hover_color='#FFFFFF', progress_color= self.VIOLET_LIGHT) 
+        self.bgSub_bgRatio_slider.set (self.bgSub_MOG_bgRatio)
+        self.bgSub_bgRatio_slider.grid (row=2, column = 1, padx=5, pady=5, sticky = 'ew')
 
 
         ## Model selection 
@@ -239,6 +256,18 @@ class App (ctk.CTk):
         else:
             self.bgSub_view.grid ()
 
+    def bgRatio_slider_callback (self, event):
+        self.bgSub_MOG_bgRatio = self.bgSub_bgRatio_slider.get ()
+        self.select_bgSubstractor (None)
+
+    def history_spinbox_callback (self):
+        self.bgSub_history_states = int (self.history_spinbox.get ())
+        self.select_bgSubstractor (None)
+
+    def nGaussians_spinbox_callback (self):
+        self.bgSub_MOG_nGaussians = int (self.nGaussian_mixtures_spinbox.get ())
+        self.select_bgSubstractor (None)
+
     def channel_select (self, channel=1):
         self.selected_channel.set (channel)
         self.channel_label.configure (text = f"Channel {channel}")
@@ -270,9 +299,10 @@ class App (ctk.CTk):
 
     def select_bgSubstractor (self, event):
         if self.bgSub_combo.get () == "Mixture-of-Gaussian - MoG":
-             self.background_substractor = cv2.bgsegm.createBackgroundSubtractorMOG(history=200, nmixtures=3, backgroundRatio=.95, noiseSigma=10)
+             self.background_substractor = cv2.bgsegm.createBackgroundSubtractorMOG(history=self.bgSub_history_states, nmixtures=self.bgSub_MOG_nGaussians, 
+                                                                                    backgroundRatio=self.bgSub_MOG_bgRatio, noiseSigma=10)
         elif self.bgSub_combo.get () == "MoG2":
-            self.background_substractor = cv2.createBackgroundSubtractorMOG2(history = 200, detectShadows = False, varThreshold=300)
+            self.background_substractor = cv2.createBackgroundSubtractorMOG2(history=self.bgSub_history_states, detectShadows = False, varThreshold=300)
 
     def detection_threshold_adjust (self, value):
         self.detection_threshold = round (value, 3)
@@ -311,7 +341,7 @@ class App (ctk.CTk):
 
             if self.bgSub_toggle.get ():
                 fgMask = self.background_substractor.apply(frame)
-                photo_image = ctk.CTkImage (dark_image=Image.fromarray(fgMask) , size=(250, 250))
+                photo_image = ctk.CTkImage (dark_image=Image.fromarray(fgMask), size=(250, 250))
                 self.bgSub_view.configure(image=photo_image) 
             
             # Check if we should detect people or stream raw video frames
