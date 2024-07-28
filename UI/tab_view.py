@@ -1,8 +1,11 @@
 import datetime
 import os
 import customtkinter as ctk 
+import tkinter as tk
+from tkinter import ttk
 from PIL import Image 
 import cv2
+from UI.SpinBox import IntSpinbox
 from db.db_manager import delete_record, get_records_all, insert_record
 from utils.cam_functions import get_vcap, setup_output_stream
 from utils.utils import bgr_to_hex, hex_to_bgr
@@ -10,7 +13,7 @@ from utils.yolo_api import detect, load_model
 from utils.constants import *
 from CTkColorPicker import *
 from CTkTable import *
-
+from tkcalendar import Calendar, DateEntry
 
 
 class TabView(ctk.CTkTabview):
@@ -42,7 +45,7 @@ class TabView(ctk.CTkTabview):
 
         ### LIVE VIEW TAB
 
-        self.live_view_tab = self.add('live feed')
+        self.live_view_tab = self.add('Live Feed')
 
         self.live_frame = ctk.CTkFrame (self.live_view_tab, fg_color='transparent')
         self.live_frame.pack (expand=True, fill='both', pady=20, padx = 60)
@@ -169,7 +172,7 @@ class TabView(ctk.CTkTabview):
 
 
         ### PLAYBACK VIEW
-        self.playback_view_tab = self.add('playback')
+        self.playback_view_tab = self.add('Playback')
         self.playback_frame = ctk.CTkFrame (self.playback_view_tab, fg_color='transparent')
         self.playback_frame.pack (expand=True, fill='both', pady=20, padx = 60)
 
@@ -187,38 +190,98 @@ class TabView(ctk.CTkTabview):
         self.navigation_frame.pack(side = 'right')
 
         self.search_frame = ctk.CTkFrame(self.navigation_frame, fg_color='transparent')
-        self.search_frame.pack(side = 'top')
-        button2 = ctk.CTkButton(self.search_frame, text='search frame')
-        button2.pack()
-        
+        self.search_frame.pack(side = 'top', ipady = 20)
+
+        self.dates = ctk.CTkFrame(self.search_frame, fg_color = 'transparent')
+        self.dates.pack()
+        self.dates.columnconfigure (0, weight=1)
+        self.dates.columnconfigure (1, weight=1)
+        self.dates.rowconfigure (0, weight=1)
+        self.dates.rowconfigure (1, weight=1)
+  
+        self.start_date_label = ctk.CTkLabel(self.dates, text='Start Date', font = STANDARD_FONT)
+        self.start_date_label.grid(column = 0, row = 0, pady = 5, padx = 20)
+        self.start_date_entry = ctk.CTkEntry(self.dates, width=160, height = 32, font = STANDARD_FONT, placeholder_text= f'{datetime.datetime.now(tz=datetime.timezone.utc).strftime("%d-%m-%Y")}', placeholder_text_color='white', text_color='white', fg_color=VIOLET_DARK, border_color= VIOLET_LIGHT, border_width= 1, corner_radius= 8)
+        self.start_date_entry.grid(column = 0, row = 1, pady = 5, padx = 20)
+
+        self.start_date_entry.bind("<Button>", self.pop_calendar)
+
+        self.end_date_label = ctk.CTkLabel(self.dates, text='End Date', font = STANDARD_FONT)
+        self.end_date_label.grid(column = 1, row = 0, pady = 5, padx = 20)
+        self.end_date_entry = ctk.CTkEntry(self.dates, width=160, height = 32, font = STANDARD_FONT, placeholder_text= f'{datetime.datetime.now(tz=datetime.timezone.utc).strftime("%d-%m-%Y")}', placeholder_text_color='white', text_color='white', fg_color=VIOLET_DARK, border_color= VIOLET_LIGHT, border_width= 1, corner_radius= 8)
+        self.end_date_entry.grid(column = 1, row = 1, pady = 5, padx = 20)
+
+        self.end_date_entry.bind("<Button>", self.pop_calendar)
+
         self.table_manage_frame = ctk.CTkFrame(self.navigation_frame, fg_color='transparent')
         self.table_manage_frame.pack(side = 'bottom', expand=True, fill='both')
 
+        self.table_labels = ctk.CTkSegmentedButton(self.table_manage_frame, dynamic_resizing=True, values = ['Path', 'Number of Frames', 'Timestamp'], width = 600, height = 30, fg_color= VIOLET_DARK,bg_color=VIOLET_DARK, unselected_color= VIOLET_DARK, unselected_hover_color= VIOLET_DARK, selected_hover_color= VIOLET_DARK,selected_color= VIOLET_DARK)
+        self.table_labels.pack(side= 'top', expand = True, fill = 'x', pady = 0)
         self.data_table_frame = ctk.CTkScrollableFrame(self.table_manage_frame, width = 900, height = 350, fg_color='transparent')
-        self.data_table_frame.pack(side = 'top', expand=True, fill='x')
+        self.data_table_frame.pack(side = 'top', expand=True, fill='x', pady = 0)
         data_cursor = get_records_all()
-        self.data.append(['Path', 'Number of Frames', 'Timestamp'])
+
 
         for entry in data_cursor:
             row = [entry['Path'], entry['Number of Frames'], entry['Timestamp'] ]
             self.data.append(row)
 
-        self.data_table = CTkTable(self.data_table_frame, column = 3, values = self.data, bg_color = 'transparent', header_color=VIOLET_DARK, font=STANDARD_FONT, corner_radius = 10, command= self.select_row)
-        self.data_table.pack(expand = True, fill = 'both', padx = 20, pady = 20)
+        self.data_table = CTkTable(self.data_table_frame, column = 3, values = self.data, bg_color = 'transparent', font=STANDARD_FONT, corner_radius = 10, command= self.select_row)
+        self.data_table.pack(expand = True, fill = 'both', padx = 0, pady = 0)
 
-        self.prev_table_row = 0
+        self.prev_table_row = -1
 
         self.data_table.edit_row(len(self.data)-1, corner_radius=0)
+        self.data_table.edit_row(0, corner_radius=0)
 
-        
-        self.delete_button = ctk.CTkButton(self.table_manage_frame, width = 120, height= 30, corner_radius= 8, fg_color = 'red', text = 'Delete row', command= self.delete_row)
-        self.delete_button.pack(side = 'left', padx=10, pady=10)
-        self.play_vid_button = ctk.CTkButton(self.table_manage_frame, width = 120, height= 30, corner_radius= 8, fg_color = 'green', text = 'Play video', command = self.play_video_playback)
+        self.play_vid_button = ctk.CTkButton(self.table_manage_frame, width = 120, height= 30, corner_radius= 8, fg_color = GREEN_DARK, hover_color= GREEN_LIGHT, text = 'Play video', command = self.play_video_playback)
         self.play_vid_button.pack(side = 'left', padx=10, pady=10)
+        
+        self.delete_button = ctk.CTkButton(self.table_manage_frame, width = 120, height= 30, corner_radius= 8, fg_color = VIOLET_DARK, hover_color= 'red', text = 'Delete row', command= self.delete_row)
+        self.delete_button.pack(side = 'left', padx=10, pady=10)
+
+
+    def pop_calendar(self, event):
+        x, y = self.start_date_entry.winfo_rootx(), self.start_date_entry.winfo_rooty()
+        root = ctk.CTk()
+        root.geometry(f"360x300+{x}+{y}")
+
+        frame = ctk.CTkFrame(root)
+        frame.pack(fill="both", padx=10, pady=10, expand=True)
+
+        style = ttk.Style(root)
+        style.theme_use("default")
+
+        cal = Calendar(frame, selectmode='day', locale='en_US', disabledforeground='red', cursor="hand2", background=VIOLET_LIGHT, selectbackground= VIOLET_DARK)
+        cal.pack(side = 'top', fill="both", expand=True, padx=10, pady=10)
+
+        time_frame = ctk.CTkFrame(frame)
+        time_frame.pack(side = 'bottom', fill="both", padx=10, pady=10, expand=True)
+
+        time_frame.columnconfigure ((0, 1, 2), weight=1)
+        time_frame.rowconfigure ((0, 1), weight=1)
+
+        hour_label = ctk.CTkLabel(time_frame, text='hour', font = ('Calibri', 14))
+        hour_label.grid(column = 0, row = 0, pady = 0, padx = 20)
+        hour_entry = IntSpinbox(time_frame, width=100, height= 30, text_font= ('Calibri', 13), font = ('Calibri', 11), value= 0, step_size=1, button_color= VIOLET_DARK, button_hover_color= VIOLET_LIGHT, min_val= 0, max_val=23)
+        hour_entry.grid(column = 0, row = 1)
+
+        min_label = ctk.CTkLabel(time_frame, text='min', font = ('Calibri', 14))
+        min_label.grid(column = 1, row = 0, pady = 0, padx = 20)
+        minute_entry = IntSpinbox(time_frame, width=100, height= 30, text_font= ('Calibri', 13), value= 0, font = ('Calibri', 11), step_size=1, button_color= VIOLET_DARK, button_hover_color= VIOLET_LIGHT, min_val= 0, max_val=59)
+        minute_entry.grid(column = 1 , row = 1)
+
+        sec_label = ctk.CTkLabel(time_frame, text='sec', font = ('Calibri', 14))
+        sec_label.grid(column = 2, row = 0, pady = 0, padx = 20)
+        sec_entry = IntSpinbox(time_frame, width=100, height= 30, value= 0, text_font= ('Calibri', 13) , font = ('Calibri', 11), step_size=1, button_color= VIOLET_DARK, button_hover_color= VIOLET_LIGHT, min_val= 0, max_val=59)
+        sec_entry.grid(column = 2, row = 1)
+
+        root.mainloop()
 
     def play_video_playback(self):
         index = self.prev_table_row
-        if index == 0: return
+        if index == -1: return
         rec = self.data[index]
 
         vid_name = rec[0].split ('\\')[-1]
@@ -238,7 +301,7 @@ class TabView(ctk.CTkTabview):
 
     def delete_row(self):
         index = self.prev_table_row
-        if index != 0:
+        if index != -1:
             self.data_table.delete_row(index)
             rec = self.data[index]
             record = { "Path": rec[0],
@@ -256,9 +319,9 @@ class TabView(ctk.CTkTabview):
 
     def select_row(self, event):
         index = event['row']
-        if index == 0 or index == self.prev_table_row:
+        if index == -1 or index == self.prev_table_row:
             return
-        if self.prev_table_row != 0:
+        if self.prev_table_row != -1:
             self.data_table.edit_row(self.prev_table_row, fg_color='transparent')
         self.data_table.edit_row(index, fg_color = VIOLET_LIGHT)
 
@@ -271,31 +334,21 @@ class TabView(ctk.CTkTabview):
         folder_path = ctk.filedialog.askdirectory()
         if folder_path == "": return
         self.storage_path_label.configure (text=folder_path.replace ('/', '\\'))
-
-    def channel_select (self, channel=1):
-        self.selected_channel.set (channel)
-        self.channel_label.configure (text = f"Channel {channel}")
-        self.input_vcap = get_vcap (self.camera_ip_address.get (), channel = channel) 
-        if channel == 4:
-            self.channel_top_left.configure (fg_color=VIOLET_LIGHT)
-            self.channel_top_right.configure (fg_color="transparent")
-            self.channel_bottom_left.configure (fg_color="transparent")
-            self.channel_bottom_right.configure (fg_color="transparent")
-        elif channel == 1:
-            self.channel_top_left.configure (fg_color="transparent")
-            self.channel_top_right.configure (fg_color=VIOLET_LIGHT)
-            self.channel_bottom_left.configure (fg_color="transparent")
-            self.channel_bottom_right.configure (fg_color="transparent")
-        elif channel == 3:
-            self.channel_top_left.configure (fg_color="transparent")
-            self.channel_top_right.configure (fg_color="transparent")
-            self.channel_bottom_left.configure (fg_color=VIOLET_LIGHT)
-            self.channel_bottom_right.configure (fg_color="transparent")
-        elif channel == 2:
-            self.channel_top_left.configure (fg_color="transparent")
-            self.channel_top_right.configure (fg_color="transparent")
-            self.channel_bottom_left.configure (fg_color="transparent")
-            self.channel_bottom_right.configure (fg_color=VIOLET_LIGHT)
+        
+    def channel_select(self, channel=1):
+        self.selected_channel.set(channel)
+        self.channel_label.configure(text=f"Channel {channel}")
+        self.input_vcap = get_vcap(self.camera_ip_address.get(), channel=channel)
+        
+        channel_map = {
+            4: self.channel_top_left,
+            1: self.channel_top_right,
+            3: self.channel_bottom_left,
+            2: self.channel_bottom_right
+        }
+        
+        for ch, widget in channel_map.items():
+            widget.configure(fg_color=VIOLET_LIGHT if ch == channel else "transparent")
 
 
     def model_select (self):
@@ -323,7 +376,7 @@ class TabView(ctk.CTkTabview):
         
     def open_camera (self): 
         ret, frame = self.input_vcap.read() 
-        timestamp = datetime.datetime.now(tz=datetime.timezone.utc).strftime("%Y-%m-%d_%H-%M-%S_UTC")
+        timestamp = datetime.datetime.now(tz=datetime.timezone.utc).strftime("%d-%m-%Y_%H-%M-%S_UTC")
         display_frame = None
         if ret:
             frame = cv2.resize(frame, FRAME_SIZE) 
