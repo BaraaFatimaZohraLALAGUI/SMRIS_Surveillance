@@ -329,12 +329,12 @@ class TabView(ctk.CTkTabview):
         return self.data[index][0]
     
 
-
     def select_folder(self):
         folder_path = ctk.filedialog.askdirectory()
         if folder_path == "": return
         self.storage_path_label.configure (text=folder_path.replace ('/', '\\'))
-        
+
+
     def channel_select(self, channel=1):
         self.selected_channel.set(channel)
         self.channel_label.configure(text=f"Channel {channel}")
