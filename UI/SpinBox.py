@@ -64,7 +64,7 @@ class IntSpinbox(ctk.CTkFrame):
         except ValueError:
             return
 
-    def get(self) -> Union[float, None]:
+    def get(self) -> Union[int, None]:
         try:
             return int(self.entry.get())
         except ValueError:

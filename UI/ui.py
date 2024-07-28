@@ -59,6 +59,8 @@ class App (ctk.CTk):
         self.background_substractor = cv2.bgsegm.createBackgroundSubtractorMOG(history=self.bgSub_history_states, nmixtures=3, backgroundRatio=.95, noiseSigma=10)
         self.bgSub_MOG_nGaussians = 5
         self.bgSub_MOG_bgRatio = .85
+        self.bgSub_MOG2_detectShadows = ctk.BooleanVar(value= False)
+        self.MoG2_threshold = 25
 
     def run (self):
         self.ui_setup ()
@@ -183,8 +185,8 @@ class App (ctk.CTk):
 
         history_label = ctk.CTkLabel (self.MOG_params_frame, text= "Number of history entries", font=self.STANDARD_FONT)
         history_label.grid (row=0, column=0, padx=20, pady=5, sticky='w')
-        self.history_spinbox = IntSpinbox(self.MOG_params_frame, width=150, step_size=1, value=self.bgSub_history_states, button_color=self.VIOLET_DARK, button_hover_color=self.VIOLET_LIGHT, command=self.history_spinbox_callback)
-        self.history_spinbox.grid(row=0, column=1, padx=20, pady=5, sticky='ew')
+        self.MOG_history_spinbox = IntSpinbox(self.MOG_params_frame, width=150, step_size=1, value=self.bgSub_history_states, button_color=self.VIOLET_DARK, button_hover_color=self.VIOLET_LIGHT, command=self.MOG_history_spinbox_callback)
+        self.MOG_history_spinbox.grid(row=0, column=1, padx=20, pady=5, sticky='ew')
 
         nGaussian_mixtures = ctk.CTkLabel (self.MOG_params_frame, text= "Number of Gaussian mixtures", font=self.STANDARD_FONT)
         nGaussian_mixtures.grid (row=1, column=0, padx=20, pady=5, sticky='w')
@@ -198,13 +200,34 @@ class App (ctk.CTk):
         self.bgSub_bgRatio_slider.set (self.bgSub_MOG_bgRatio)
         self.bgSub_bgRatio_slider.grid (row=2, column = 1, padx=5, pady=5, sticky = 'ew')
 
+        # MOG2 PARAMETER FRAME 
+        self.MOG2_params_frame = ctk.CTkFrame (bgSub_frame)
+        self.MOG2_params_frame.grid (row=2, column = 0, pady= 10, padx = 5, sticky='news')
+        self.MOG2_params_frame.grid_remove ()
+
+        self.MOG2_params_frame.columnconfigure ((0, 1), weight=1)
+        self.MOG2_params_frame.rowconfigure ((0, 1, 2), weight=1)
+
+        MOG2_history_label = ctk.CTkLabel (self.MOG2_params_frame, text= "Number of history entries", font=self.STANDARD_FONT)
+        MOG2_history_label.grid (row=0, column=0, padx=20, pady=5, sticky='w')
+        self.MOG2_history_spinbox = IntSpinbox(self.MOG2_params_frame, width=150, step_size=1, value=self.bgSub_history_states, button_color=self.VIOLET_DARK, button_hover_color=self.VIOLET_LIGHT, command=self.MOG_history_spinbox_callback)
+        self.MOG2_history_spinbox.grid(row=0, column=1, padx=20, pady=5, sticky='ew')
+
+        mog2_th_label = ctk.CTkLabel (self.MOG2_params_frame, text= "MoG2 Threshold", font=self.STANDARD_FONT)
+        mog2_th_label.grid (row=1, column=0, padx=20, pady=5, sticky='w')
+
+        self.MOG2_threshold_spinbox = IntSpinbox(self.MOG2_params_frame, width=150, step_size=1, value=self.MoG2_threshold, button_color=self.VIOLET_DARK, button_hover_color=self.VIOLET_LIGHT, command=self.MOG2_threshold_spinbox_callback)
+        self.MOG2_threshold_spinbox.grid(row=1, column=1, padx=20, pady=5, sticky='ew')
+
+        self.bgSub_MOG2_detectShadows_checkbox = ctk.CTkCheckBox(master=self.MOG2_params_frame, text="Detect shadows", variable=self.bgSub_MOG2_detectShadows,command=lambda: self.select_bgSubstractor(None), onvalue=True, offvalue=False, font=self.STANDARD_FONT, fg_color=self.VIOLET_LIGHT, hover_color=self.VIOLET_DARK)
+        self.bgSub_MOG2_detectShadows_checkbox.grid(row=2, column=0, columnspan=2, padx=20, pady=5, sticky='ew')
+        
 
         ## Model selection 
         self.model_select_frame = ctk.CTkFrame (self.detection_frame, fg_color='transparent', border_color="#454545", border_width=1)
         self.model_select_frame.grid (row=2, column=0, columnspan=3, sticky='we', padx=30, pady=10)
 
-        self.model_select_frame.columnconfigure (0, weight=1)
-        self.model_select_frame.columnconfigure (1, weight=1)
+        self.model_select_frame.columnconfigure ((0, 1), weight=1)
         self.model_select_frame.rowconfigure (0, weight=1)
 
         self.model_select_label = ctk.CTkLabel (self.model_select_frame, text="Select an inference model", font=self.STANDARD_FONT)
@@ -252,20 +275,24 @@ class App (ctk.CTk):
 
     def toggle_bgSub (self):
         if not self.bgSub_toggle.get ():
-            self.bgSub_view.grid_remove ()
+            self.bgSub_frame.grid_remove ()
         else:
-            self.bgSub_view.grid ()
+            self.bgSub_frame.grid ()
 
     def bgRatio_slider_callback (self, event):
         self.bgSub_MOG_bgRatio = self.bgSub_bgRatio_slider.get ()
         self.select_bgSubstractor (None)
 
-    def history_spinbox_callback (self):
-        self.bgSub_history_states = int (self.history_spinbox.get ())
+    def MOG_history_spinbox_callback (self):
+        self.bgSub_history_states = int (self.MOG_history_spinbox.get ())
         self.select_bgSubstractor (None)
 
     def nGaussians_spinbox_callback (self):
         self.bgSub_MOG_nGaussians = int (self.nGaussian_mixtures_spinbox.get ())
+        self.select_bgSubstractor (None)
+
+    def MOG2_threshold_spinbox_callback (self):
+        self.MoG2_threshold = self.MOG2_threshold_spinbox.get ()
         self.select_bgSubstractor (None)
 
     def channel_select (self, channel=1):
@@ -298,11 +325,15 @@ class App (ctk.CTk):
         self.model = load_model(self.selected_model.get ())
 
     def select_bgSubstractor (self, event):
+        self.MOG_params_frame.grid ()
+        self.MOG2_params_frame.grid_remove ()
         if self.bgSub_combo.get () == "Mixture-of-Gaussian - MoG":
              self.background_substractor = cv2.bgsegm.createBackgroundSubtractorMOG(history=self.bgSub_history_states, nmixtures=self.bgSub_MOG_nGaussians, 
                                                                                     backgroundRatio=self.bgSub_MOG_bgRatio, noiseSigma=10)
         elif self.bgSub_combo.get () == "MoG2":
-            self.background_substractor = cv2.createBackgroundSubtractorMOG2(history=self.bgSub_history_states, detectShadows = False, varThreshold=300)
+            self.MOG_params_frame.grid_remove ()
+            self.MOG2_params_frame.grid ()
+            self.background_substractor = cv2.createBackgroundSubtractorMOG2(history=self.bgSub_history_states, detectShadows = self.bgSub_MOG2_detectShadows.get (), varThreshold=self.MoG2_threshold)
 
     def detection_threshold_adjust (self, value):
         self.detection_threshold = round (value, 3)
