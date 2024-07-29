@@ -199,6 +199,7 @@ class TabView(ctk.CTkTabview):
         self.dates.rowconfigure (0, weight=1)
         self.dates.rowconfigure (1, weight=1)
   
+        self.calendar_window = None
         self.start_date_label = ctk.CTkLabel(self.dates, text='Start Date', font = STANDARD_FONT)
         self.start_date_label.grid(column = 0, row = 0, pady = 5, padx = 20)
         self.start_date_entry = ctk.CTkEntry(self.dates, width=160, height = 32, font = STANDARD_FONT, placeholder_text= f'{datetime.datetime.now(tz=datetime.timezone.utc).strftime("%d-%m-%Y")}', placeholder_text_color='white', text_color='white', fg_color=VIOLET_DARK, border_color= VIOLET_LIGHT, border_width= 1, corner_radius= 8)
@@ -243,14 +244,19 @@ class TabView(ctk.CTkTabview):
 
 
     def pop_calendar(self, event):
-        x, y = self.start_date_entry.winfo_rootx(), self.start_date_entry.winfo_rooty()
-        root = ctk.CTk()
-        root.geometry(f"360x300+{x}+{y}")
 
-        frame = ctk.CTkFrame(root)
+        if self.calendar_window and self.calendar_window.winfo_exists():
+            self.calendar_window.lift()
+            return
+        
+        x, y = self.start_date_entry.winfo_rootx(), self.start_date_entry.winfo_rooty()
+        self.calendar_window = ctk.CTk()
+        self.calendar_window.geometry(f"360x300+{x}+{y}")
+
+        frame = ctk.CTkFrame(self.calendar_window)
         frame.pack(fill="both", padx=10, pady=10, expand=True)
 
-        style = ttk.Style(root)
+        style = ttk.Style(self.calendar_window)
         style.theme_use("default")
 
         cal = Calendar(frame, selectmode='day', locale='en_US', disabledforeground='red', cursor="hand2", background=VIOLET_LIGHT, selectbackground= VIOLET_DARK)
@@ -277,7 +283,12 @@ class TabView(ctk.CTkTabview):
         sec_entry = IntSpinbox(time_frame, width=100, height= 30, value= 0, text_font= ('Calibri', 13) , font = ('Calibri', 11), step_size=1, button_color= VIOLET_DARK, button_hover_color= VIOLET_LIGHT, min_val= 0, max_val=59)
         sec_entry.grid(column = 2, row = 1)
 
-        root.mainloop()
+        self.calendar_window.protocol("WM_DELETE_WINDOW", self.on_calendar_window_close)
+        self.calendar_window.mainloop()
+
+    def on_calendar_window_close(self):
+        self.calendar_window.destroy()
+        self.calendar_window = None
 
     def play_video_playback(self):
         index = self.prev_table_row
