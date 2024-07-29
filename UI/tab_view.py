@@ -1,7 +1,6 @@
 import datetime
 import os
 import customtkinter as ctk 
-import tkinter as tk
 from tkinter import ttk
 from PIL import Image 
 import cv2
@@ -13,7 +12,7 @@ from utils.yolo_api import detect, load_model
 from utils.constants import *
 from CTkColorPicker import *
 from CTkTable import *
-from tkcalendar import Calendar, DateEntry
+from tkcalendar import Calendar
 
 
 class TabView(ctk.CTkTabview):
@@ -42,6 +41,17 @@ class TabView(ctk.CTkTabview):
 
         self.recording_behavior = ctk.StringVar (value="Recording off") # 'Recording off', 'Continuous recording', 'Only on detection'
         self.recording_storage_path = 'captures_out2'
+
+
+        ## Background Substratction
+        self.bg_substraction_methods = ['Mixture-of-Gaussian - MoG', 'MoG2']
+        self.bgSub_history_states = 200
+        self.background_substractor = cv2.bgsegm.createBackgroundSubtractorMOG(history=self.bgSub_history_states, nmixtures=3, backgroundRatio=.95, noiseSigma=10)
+        self.bgSub_MOG_nGaussians = 5
+        self.bgSub_MOG_bgRatio = .85
+        self.bgSub_MOG2_detectShadows = ctk.BooleanVar(value= False)
+        self.MoG2_threshold = 25
+
 
         ### LIVE VIEW TAB
 
@@ -123,11 +133,80 @@ class TabView(ctk.CTkTabview):
 
         self.detection_frame_color_button = ctk.CTkButton(self.detection_frame, text="Detection frame color", command=self.color_picker, font=STANDARD_FONT, width=130, height=40, corner_radius=20, border_color=bgr_to_hex(self.rect_color),  border_width=1, fg_color= 'transparent')
         self.detection_frame_color_button.grid(row=0, column=1, pady=20, padx=30, columnspan=2, sticky='ew')
-        
+             
+        # Background substraction
+        self.bgSub_frame = ctk.CTkFrame (self.detection_frame, fg_color='transparent', border_color="#454545", border_width=1)
+        self.bgSub_frame.grid (row=1, column=0, columnspan=3, sticky='news', padx=30, pady=10)
+        self.bgSub_frame.columnconfigure (0, weight=1)
+        self.bgSub_frame.columnconfigure (1, weight=1)
+        self.bgSub_frame.rowconfigure (0, weight=1)
+        self.bgSub_frame.rowconfigure (1, weight=1)
+        self.bgSub_frame.rowconfigure (2, weight=1)
+
+        self.bgSub_toggle_var = ctk.BooleanVar (value=True)
+        self.bgSub_toggle = ctk.CTkSwitch(self.bgSub_frame, text='Enable background substraction', switch_width=50, command=self.toggle_bgSub, font=STANDARD_FONT, fg_color= VIOLET_DARK, progress_color= VIOLET_LIGHT, variable=self.bgSub_toggle_var) 
+        self.bgSub_toggle.grid (row=0, column = 0, pady= 10, padx = 10, columnspan=2, sticky='w')
+
+        self.bgSub_label = ctk.CTkLabel (self.bgSub_frame, text= 'Select a background substraction method', font=STANDARD_FONT)
+        self.bgSub_label.grid (row=1, column=0, pady=10, padx=10, sticky='w')
+
+        self.bgSub_combo = ctk.CTkComboBox (self.bgSub_frame, values=self.bg_substraction_methods, font=STANDARD_FONT, width=450, command=self.select_bgSubstractor, dropdown_font=STANDARD_FONT)
+        self.bgSub_combo.grid (row=1, column=1, padx=20, pady=10, sticky='e')
+
+        self.bgSub_view = ctk.CTkLabel (self.bgSub_frame, text='', corner_radius=15) 
+        self.bgSub_view.grid (row=2, column = 1, pady= 10, padx = 5, sticky='news')
+
+        # BG MOG PARAMETERS 
+        self.MOG_params_frame = ctk.CTkFrame (self.bgSub_frame)
+        self.MOG_params_frame.grid (row=2, column = 0, pady= 10, padx = 5, sticky='news')
+
+        self.MOG_params_frame.columnconfigure (0, weight=1)
+        self.MOG_params_frame.columnconfigure (1, weight=1)
+        self.MOG_params_frame.rowconfigure ((0, 1, 2), weight=1)
+
+        history_label = ctk.CTkLabel (self.MOG_params_frame, text= "Number of history entries", font=STANDARD_FONT)
+        history_label.grid (row=0, column=0, padx=20, pady=5, sticky='w')
+        self.MOG_history_spinbox = IntSpinbox(self.MOG_params_frame, width=150, step_size=1, value=self.bgSub_history_states, button_color=VIOLET_DARK, button_hover_color=VIOLET_LIGHT, command=self.MOG_history_spinbox_callback)
+        self.MOG_history_spinbox.grid(row=0, column=1, padx=20, pady=5, sticky='ew')
+
+        nGaussian_mixtures = ctk.CTkLabel (self.MOG_params_frame, text= "Number of Gaussian mixtures", font=STANDARD_FONT)
+        nGaussian_mixtures.grid (row=1, column=0, padx=20, pady=5, sticky='w')
+        self.nGaussian_mixtures_spinbox = IntSpinbox(self.MOG_params_frame, width=150, step_size=1, value=self.bgSub_MOG_nGaussians, button_color=VIOLET_DARK, button_hover_color=VIOLET_LIGHT, command=self.nGaussians_spinbox_callback)
+        self.nGaussian_mixtures_spinbox.grid(row=1, column=1, padx=20, pady=5, sticky='ew')
+
+        bgSub_bgRatio_label = ctk.CTkLabel (self.MOG_params_frame, text= "Background ratio", font=STANDARD_FONT)
+        bgSub_bgRatio_label.grid (row=2, column=0, padx=20, pady=5, sticky='w')
+
+        self.bgSub_bgRatio_slider = ctk.CTkSlider(master=self.MOG_params_frame, from_=0, to=1, command= self.bgRatio_slider_callback, width = 150, button_color = '#FFFFFF', button_hover_color='#FFFFFF', progress_color= VIOLET_LIGHT) 
+        self.bgSub_bgRatio_slider.set (self.bgSub_MOG_bgRatio)
+        self.bgSub_bgRatio_slider.grid (row=2, column = 1, padx=5, pady=5, sticky = 'ew')
+
+        # MOG2 PARAMETER FRAME 
+        self.MOG2_params_frame = ctk.CTkFrame (self.bgSub_frame)
+        self.MOG2_params_frame.grid (row=2, column = 0, pady= 10, padx = 5, sticky='news')
+        self.MOG2_params_frame.grid_remove ()
+
+        self.MOG2_params_frame.columnconfigure ((0, 1), weight=1)
+        self.MOG2_params_frame.rowconfigure ((0, 1, 2), weight=1)
+
+        MOG2_history_label = ctk.CTkLabel (self.MOG2_params_frame, text= "Number of history entries", font=STANDARD_FONT)
+        MOG2_history_label.grid (row=0, column=0, padx=20, pady=5, sticky='w')
+        self.MOG2_history_spinbox = IntSpinbox(self.MOG2_params_frame, width=150, step_size=1, value=self.bgSub_history_states, button_color=VIOLET_DARK, button_hover_color=VIOLET_LIGHT, command=self.MOG_history_spinbox_callback)
+        self.MOG2_history_spinbox.grid(row=0, column=1, padx=20, pady=5, sticky='ew')
+
+        mog2_th_label = ctk.CTkLabel (self.MOG2_params_frame, text= "MoG2 Threshold", font=STANDARD_FONT)
+        mog2_th_label.grid (row=1, column=0, padx=20, pady=5, sticky='w')
+
+        self.MOG2_threshold_spinbox = IntSpinbox(self.MOG2_params_frame, width=150, step_size=1, value=self.MoG2_threshold, button_color=VIOLET_DARK, button_hover_color=VIOLET_LIGHT, command=self.MOG2_threshold_spinbox_callback)
+        self.MOG2_threshold_spinbox.grid(row=1, column=1, padx=20, pady=5, sticky='ew')
+
+        self.bgSub_MOG2_detectShadows_checkbox = ctk.CTkCheckBox(master=self.MOG2_params_frame, text="Detect shadows", variable=self.bgSub_MOG2_detectShadows,command=lambda: self.select_bgSubstractor(None), onvalue=True, offvalue=False, font=STANDARD_FONT, fg_color=VIOLET_LIGHT, hover_color=VIOLET_DARK)
+        self.bgSub_MOG2_detectShadows_checkbox.grid(row=2, column=0, columnspan=2, padx=20, pady=5, sticky='ew')
+          
 
         ## Model selection 
         self.model_select_frame = ctk.CTkFrame (self.detection_frame, fg_color='transparent', border_color="#454545", border_width=1)
-        self.model_select_frame.grid (row=1, column=0, columnspan=3, sticky='we', padx=30, pady=20)
+        self.model_select_frame.grid (row=2, column=0, columnspan=3, sticky='we', padx=30, pady=20)
 
         self.model_select_frame.columnconfigure (0, weight=1)
         self.model_select_frame.columnconfigure (1, weight=1)
@@ -141,12 +220,12 @@ class TabView(ctk.CTkTabview):
 
         ## Threshold adjusments
         self.threshold_frame = ctk.CTkFrame(self.detection_frame, bg_color = 'transparent', corner_radius = 20, border_color = "#3B3B3B", border_width= 1)
-        self.threshold_frame.grid(row=2, column=0, columnspan=3, pady=5, padx=30, ipady=10, sticky='ew')
+        self.threshold_frame.grid(row=3, column=0, columnspan=3, pady=5, padx=30, ipady=10, sticky='ew')
         self.threshold_frame.columnconfigure (0, weight=1)
         self.threshold_frame.rowconfigure (0, weight=1)
         self.threshold_frame.rowconfigure (1, weight=1)
 
-        self.detection_threshold_slider = ctk.CTkSlider(master=self.threshold_frame, from_=0.2, to=.95, command= self.detection_threshold_adjust, width = 400, button_color = '#FFFFFF', button_hover_color='#FFFFFF', progress_color= VIOLET_LIGHT) 
+        self.detection_threshold_slider = ctk.CTkSlider(master=self.threshold_frame, from_=0., to=1., command= self.detection_threshold_adjust, width = 400, button_color = '#FFFFFF', button_hover_color='#FFFFFF', progress_color= VIOLET_LIGHT) 
         self.detection_threshold_slider.set (self.detection_threshold)
         self.detection_threshold_slider.grid (row=0, column = 0, padx=20, pady=0, sticky = 'ew')
 
@@ -324,9 +403,7 @@ class TabView(ctk.CTkTabview):
                 if os.path.exists(rec[0]):
                     os.remove(rec[0])
             except OSError:  
-                print('file not found') 
-                    
-        
+                print('file not found')  
 
     def select_row(self, event):
         index = event['row']
@@ -338,12 +415,34 @@ class TabView(ctk.CTkTabview):
 
         self.prev_table_row = index
         return self.data[index][0]
-    
 
     def select_folder(self):
         folder_path = ctk.filedialog.askdirectory()
         if folder_path == "": return
         self.storage_path_label.configure (text=folder_path.replace ('/', '\\'))
+
+
+    def toggle_bgSub (self):
+        if not self.bgSub_toggle.get ():
+            self.self.bgSub_frame.grid_remove ()
+        else:
+            self.self.bgSub_frame.grid ()
+
+    def bgRatio_slider_callback (self, event):
+        self.bgSub_MOG_bgRatio = self.bgSub_bgRatio_slider.get ()
+        self.select_bgSubstractor (None)
+
+    def MOG_history_spinbox_callback (self):
+        self.bgSub_history_states = int (self.MOG_history_spinbox.get ())
+        self.select_bgSubstractor (None)
+
+    def nGaussians_spinbox_callback (self):
+        self.bgSub_MOG_nGaussians = int (self.nGaussian_mixtures_spinbox.get ())
+        self.select_bgSubstractor (None)
+
+    def MOG2_threshold_spinbox_callback (self):
+        self.MoG2_threshold = self.MOG2_threshold_spinbox.get ()
+        self.select_bgSubstractor (None)
 
 
     def channel_select(self, channel=1):
@@ -364,6 +463,18 @@ class TabView(ctk.CTkTabview):
 
     def model_select (self):
         self.model = load_model(self.selected_model.get ())
+
+    def select_bgSubstractor (self, event):
+        self.MOG_params_frame.grid ()
+        self.MOG2_params_frame.grid_remove ()
+        if self.bgSub_combo.get () == "Mixture-of-Gaussian - MoG":
+             self.background_substractor = cv2.bgsegm.createBackgroundSubtractorMOG(history=self.bgSub_history_states, nmixtures=self.bgSub_MOG_nGaussians, 
+                                                                                    backgroundRatio=self.bgSub_MOG_bgRatio, noiseSigma=10)
+        elif self.bgSub_combo.get () == "MoG2":
+            self.MOG_params_frame.grid_remove ()
+            self.MOG2_params_frame.grid ()
+            self.background_substractor = cv2.createBackgroundSubtractorMOG2(history=self.bgSub_history_states, detectShadows = self.bgSub_MOG2_detectShadows.get (), varThreshold=self.MoG2_threshold)
+
 
     def detection_threshold_adjust (self, value):
         self.detection_threshold = round (value, 3)
@@ -391,6 +502,11 @@ class TabView(ctk.CTkTabview):
         display_frame = None
         if ret:
             frame = cv2.resize(frame, FRAME_SIZE) 
+
+            if self.bgSub_toggle.get ():
+                fgMask = self.background_substractor.apply(frame)
+                photo_image = ctk.CTkImage (dark_image=Image.fromarray(fgMask), size=(100, 100))
+                self.bgSub_view.configure(image=photo_image) 
             
             # Check if we should detect people or stream raw video frames
             if self.detection_enabled.get ():
