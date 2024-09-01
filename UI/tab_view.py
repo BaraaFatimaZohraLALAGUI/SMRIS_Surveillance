@@ -22,7 +22,7 @@ class TabView(ctk.CTkTabview):
         self.channels = ['1', '2', '3', '4']
         self.models = ['YOLOv9 Tiny', 'YOLOv10 Nano', 'YOLOv10 Small', 'YOLOv10 Medium', 'YOLOv10 Big', 'YOLOv10 Large', 'YOLOv10 Extra Large']
 
-        self.selected_channel = ctk.StringVar (value=self.channels[3])
+        self.selected_channel = ctk.StringVar (value=self.channels[0])
         self.data = []
 
         self.selected_model = ctk.StringVar (value=self.models[0])
@@ -54,20 +54,22 @@ class TabView(ctk.CTkTabview):
 
 
         ### LIVE VIEW TAB
-
         self.live_view_tab = self.add('Live Feed')
 
         self.live_frame = ctk.CTkFrame (self.live_view_tab, fg_color='transparent')
-        self.live_frame.pack (expand=True, fill='both', pady=20, padx = 60)
+        # self.live_frame.pack (expand=True, fill='both', pady=20, padx = 60)
+        self.live_frame.place (relx=.02, rely=.01, relwidth=.98, relheight=1)
         
         self.camera_frame = ctk.CTkFrame (self.live_frame, corner_radius=10) 
-        self.camera_frame.pack (side='left', expand=False, fill='y', pady=10, padx=20)
+        # self.camera_frame.pack (side='left', expand=False, fill='y', pady=10, padx=20)
+        self.camera_frame.place (relx=.005, rely=0.005, relwidth=.4, relheight=.98)
 
         self.cam_ip_frame = ctk.CTkFrame (self.camera_frame)
-        self.cam_ip_frame.pack (expand=False, fill='x', pady=20, padx=40)
+        # self.cam_ip_frame.pack (expand=False, fill='x', pady=20, padx=40)
+        self.cam_ip_frame.place (relx=.005, rely=0.005, relwidth=.99, relheight=.045)
 
         self.ip_entry_field = ctk.CTkEntry (self.cam_ip_frame, textvariable=self.camera_ip_address, corner_radius = 0, font=STANDARD_FONT, border_color= VIOLET_DARK)
-        self.ip_entry_field.pack (side='left', expand=True, fill='x')
+        # self.ip_entry_field.pack (side='left', expand=True, fill='x')
 
         self.channel_label = ctk.CTkLabel (self.camera_frame, text='Channel ' + self.selected_channel.get (), font=('Calibri', 24, 'bold')) 
         self.channel_label.pack (side='top')
@@ -76,14 +78,16 @@ class TabView(ctk.CTkTabview):
         self.cam_connect_button.pack (side='right', expand=False, fill='both')
 
         self.cam_view = ctk.CTkLabel (self.camera_frame, text='', corner_radius=15) 
-        self.cam_view.pack(expand=False, fill='x', pady=15, padx=40, side='top') 
+        # self.cam_view.pack(expand=False, fill='x', pady=15, padx=40, side='top') 
+        self.cam_view.place(relx=.005, rely=.08, relwidth=.99, relheight=.5) 
 
         # self.channel_combo = ctk.CTkComboBox (self.camera_frame, values=self.channels, variable=self.selected_channel, command = lambda event: self.channel_select ())
         # self.channel_combo.pack (side='top')
 
         # Channel selection buttons 
         self.channel_selection_frame = ctk.CTkFrame (self.camera_frame, fg_color='transparent')
-        self.channel_selection_frame.pack ( padx=180, pady=10)
+        # self.channel_selection_frame.pack ( padx=180, pady=10)
+        self.channel_selection_frame.place (relx=.5, rely=0.005+.005+.045+.005+0.5+0.005+.15, relwidth=.4, relheight=.2, anchor='center')
 
         self.channel_selection_frame.columnconfigure (0, weight=1)
         self.channel_selection_frame.columnconfigure (1, weight=1)
@@ -116,7 +120,8 @@ class TabView(ctk.CTkTabview):
 
         ### Detection control 
         self.detection_frame = ctk.CTkFrame (self.live_frame, bg_color='transparent', corner_radius=10)
-        self.detection_frame.pack (side='right', pady=10, padx=20, expand=True, fill='x')
+        # self.detection_frame.pack (side='right', pady=10, padx=20, expand=True, fill='x')
+        self.detection_frame.place (relx=.005+.4+.005, rely=.005, relwidth=1-(.005+.4+.005+.005), relheight=.98)
 
         self.detection_frame.columnconfigure (0, weight=1)
         self.detection_frame.columnconfigure (1, weight=1)
@@ -139,9 +144,7 @@ class TabView(ctk.CTkTabview):
         self.bgSub_frame.grid (row=1, column=0, columnspan=3, sticky='news', padx=30, pady=10)
         self.bgSub_frame.columnconfigure (0, weight=1)
         self.bgSub_frame.columnconfigure (1, weight=1)
-        self.bgSub_frame.rowconfigure (0, weight=1)
-        self.bgSub_frame.rowconfigure (1, weight=1)
-        self.bgSub_frame.rowconfigure (2, weight=1)
+        self.bgSub_frame.rowconfigure ((0, 1, 2), weight=1)
 
         self.bgSub_toggle_var = ctk.BooleanVar (value=True)
         self.bgSub_toggle = ctk.CTkSwitch(self.bgSub_frame, text='Enable background substraction', switch_width=50, command=self.toggle_bgSub, font=STANDARD_FONT, fg_color= VIOLET_DARK, progress_color= VIOLET_LIGHT, variable=self.bgSub_toggle_var) 
@@ -505,7 +508,7 @@ class TabView(ctk.CTkTabview):
 
             if self.bgSub_toggle.get ():
                 fgMask = self.background_substractor.apply(frame)
-                photo_image = ctk.CTkImage (dark_image=Image.fromarray(fgMask), size=(100, 100))
+                photo_image = ctk.CTkImage (dark_image=Image.fromarray(fgMask), size=BG_SUB_FRAME_SIZE)
                 self.bgSub_view.configure(image=photo_image) 
             
             # Check if we should detect people or stream raw video frames
@@ -525,13 +528,10 @@ class TabView(ctk.CTkTabview):
                 insert_record(self.out_path, self.current_rec_frame_count, timestamp)
                 self.current_rec_frame_count = 0
                 self.out_cap.release()
-
-            # if self.recording_behavior.get () == 'Continuous recording': # 'Recording off', 'Continuous recording', 'Only on detection'
                     
             opencv_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) 
 
             photo_image = ctk.CTkImage (dark_image=Image.fromarray(opencv_image) , size=FRAME_SIZE)
-            # self.cam_view.photo_image = photo_image 
             self.cam_view.configure(image=photo_image) 
 
         elif display_frame == None or ret == False:
