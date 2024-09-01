@@ -6,5 +6,5 @@ def hex_to_bgr(hex_color):
     if hex_color.startswith('#'):
         hex_color = hex_color[1:]
         
-    bgr = tuple(int(hex_color[i:i+2], 16) for i in (4, 2, 0))
-    return bgr
+    return tuple(int(hex_color[i:i+2], 16) for i in (4, 2, 0))
+    
