@@ -2,6 +2,7 @@ import datetime
 import os
 import customtkinter as ctk 
 from tkinter import ttk
+import tkinter as tk
 from PIL import Image 
 import cv2
 from UI.SpinBox import IntSpinbox
@@ -62,24 +63,25 @@ class TabView(ctk.CTkTabview):
         
         self.camera_frame = ctk.CTkFrame (self.live_frame, corner_radius=10) 
         # self.camera_frame.pack (side='left', expand=False, fill='y', pady=10, padx=20)
-        self.camera_frame.place (relx=.005, rely=0.005, relwidth=.4, relheight=.98)
+        self.camera_frame.place (relx=.005, rely=0.005, relwidth=.4, relheight=.99)
 
-        self.cam_ip_frame = ctk.CTkFrame (self.camera_frame)
+        # self.cam_ip_frame = ctk.CTkFrame (self.camera_frame)
         # self.cam_ip_frame.pack (expand=False, fill='x', pady=20, padx=40)
-        self.cam_ip_frame.place (relx=.005, rely=0.005, relwidth=.99, relheight=.045)
+        # self.cam_ip_frame.place (relx=.005, rely=0.005, relwidth=.99, relheight=.045)
 
-        self.ip_entry_field = ctk.CTkEntry (self.cam_ip_frame, textvariable=self.camera_ip_address, corner_radius = 0, font=STANDARD_FONT, border_color= VIOLET_DARK)
+        # self.cam_connect_button = ctk.CTkButton (self.cam_ip_frame, text="Connect", command = self.channel_select, fg_color= VIOLET_DARK, hover_color= VIOLET_LIGHT ,corner_radius = 0, font=STANDARD_FONT, width=200)
+        # self.cam_connect_button.pack (side='right', expand=False, fill='both')
+
+        # self.ip_entry_field = ctk.CTkEntry (self.cam_ip_frame, textvariable=self.camera_ip_address, corner_radius = 0, font=STANDARD_FONT, border_color= VIOLET_DARK)
         # self.ip_entry_field.pack (side='left', expand=True, fill='x')
 
         self.channel_label = ctk.CTkLabel (self.camera_frame, text='Channel ' + self.selected_channel.get (), font=('Calibri', 24, 'bold')) 
-        self.channel_label.pack (side='top')
+        # self.channel_label.pack (side='top')
+        self.channel_label.place (relx=.4, rely=0.005, relwidth=.2, relheight=.05)
 
-        self.cam_connect_button = ctk.CTkButton (self.cam_ip_frame, text="Connect", command = self.channel_select, fg_color= VIOLET_DARK, hover_color= VIOLET_LIGHT ,corner_radius = 0, font=STANDARD_FONT, width=200)
-        self.cam_connect_button.pack (side='right', expand=False, fill='both')
-
-        self.cam_view = ctk.CTkLabel (self.camera_frame, text='', corner_radius=15) 
+        self.cam_view = ctk.CTkLabel (self.camera_frame, text='', corner_radius=15)
         # self.cam_view.pack(expand=False, fill='x', pady=15, padx=40, side='top') 
-        self.cam_view.place(relx=.005, rely=.08, relwidth=.99, relheight=.5) 
+        self.cam_view.place(relx=.005, rely=0.005+.05+0.005, relwidth=.99, relheight=.5) 
 
         # self.channel_combo = ctk.CTkComboBox (self.camera_frame, values=self.channels, variable=self.selected_channel, command = lambda event: self.channel_select ())
         # self.channel_combo.pack (side='top')
@@ -87,7 +89,7 @@ class TabView(ctk.CTkTabview):
         # Channel selection buttons 
         self.channel_selection_frame = ctk.CTkFrame (self.camera_frame, fg_color='transparent')
         # self.channel_selection_frame.pack ( padx=180, pady=10)
-        self.channel_selection_frame.place (relx=.5, rely=0.005+.005+.045+.005+0.5+0.005+.15, relwidth=.4, relheight=.2, anchor='center')
+        self.channel_selection_frame.place (relx=.5, rely=0.005+.05+0.005+0.5+0.015+0.1, relwidth=.4, relheight=.2, anchor='center')
 
         self.channel_selection_frame.columnconfigure (0, weight=1)
         self.channel_selection_frame.columnconfigure (1, weight=1)
@@ -121,68 +123,85 @@ class TabView(ctk.CTkTabview):
         ### Detection control 
         self.detection_frame = ctk.CTkFrame (self.live_frame, bg_color='transparent', corner_radius=10)
         # self.detection_frame.pack (side='right', pady=10, padx=20, expand=True, fill='x')
-        self.detection_frame.place (relx=.005+.4+.005, rely=.005, relwidth=1-(.005+.4+.005+.005), relheight=.98)
+        self.detection_frame.place (relx=.005+.4+.005, rely=.005, relwidth=1-(.005+.4+.005+.005), relheight=.99)
 
-        self.detection_frame.columnconfigure (0, weight=1)
-        self.detection_frame.columnconfigure (1, weight=1)
-        self.detection_frame.columnconfigure (2, weight=1)
-        self.detection_frame.rowconfigure (0, weight=1)
-        self.detection_frame.rowconfigure (1, weight=1)
-        self.detection_frame.rowconfigure (2, weight=1)
-        self.detection_frame.rowconfigure (3, weight=1)
-        self.detection_frame.rowconfigure (4, weight=1)
-        self.detection_frame.rowconfigure (5, weight=1)
+        # self.detection_frame.columnconfigure (0, weight=1)
+        # self.detection_frame.columnconfigure (1, weight=1)
+        # self.detection_frame.columnconfigure (2, weight=1)
+        # self.detection_frame.rowconfigure (0, weight=1)
+        # self.detection_frame.rowconfigure (1, weight=1)
+        # self.detection_frame.rowconfigure (2, weight=1)
+        # self.detection_frame.rowconfigure (3, weight=1)
+        # self.detection_frame.rowconfigure (4, weight=1)
+        # self.detection_frame.rowconfigure (5, weight=1)
 
         self.detection_toggle = ctk.CTkSwitch(self.detection_frame, text='Enable detection', variable=self.detection_enabled, switch_width=50, command=self.toggle_detection, font=STANDARD_FONT, fg_color= VIOLET_DARK, progress_color= VIOLET_LIGHT) 
-        self.detection_toggle.grid (row=0, column = 0, pady= 20, padx = 50, columnspan=1, sticky='w')
+        # self.detection_toggle.grid (row=0, column = 0, pady= 20, padx = 50, columnspan=1, sticky='w')
+        self.detection_toggle.place (relx=.05, rely=.005, relwidth=0.3, relheight=.06)
 
         self.detection_frame_color_button = ctk.CTkButton(self.detection_frame, text="Detection frame color", command=self.color_picker, font=STANDARD_FONT, width=130, height=40, corner_radius=20, border_color=bgr_to_hex(self.rect_color),  border_width=1, fg_color= 'transparent')
-        self.detection_frame_color_button.grid(row=0, column=1, pady=20, padx=30, columnspan=2, sticky='ew')
+        # self.detection_frame_color_button.grid(row=0, column=1, pady=20, padx=30, columnspan=2, sticky='ew')
+        self.detection_frame_color_button.place (relx=.05 + 0.3 + 0.2, rely=.005, relwidth=0.4, relheight=.06)
              
         # Background substraction
         self.bgSub_frame = ctk.CTkFrame (self.detection_frame, fg_color='transparent', border_color="#454545", border_width=1)
-        self.bgSub_frame.grid (row=1, column=0, columnspan=3, sticky='news', padx=30, pady=10)
-        self.bgSub_frame.columnconfigure (0, weight=1)
-        self.bgSub_frame.columnconfigure (1, weight=1)
-        self.bgSub_frame.rowconfigure ((0, 1, 2), weight=1)
+        # self.bgSub_frame.grid (row=1, column=0, columnspan=3, sticky='news', padx=30, pady=10)
+        self.bgSub_frame.place (relx=.05, rely=.005 + 0.06 + 0.005 , relwidth=0.9, relheight=.6)
+
+        # self.bgSub_frame.columnconfigure (0, weight=1)
+        # self.bgSub_frame.columnconfigure (1, weight=1)
+        # self.bgSub_frame.rowconfigure ((0, 1, 2), weight=1)
 
         self.bgSub_toggle_var = ctk.BooleanVar (value=True)
         self.bgSub_toggle = ctk.CTkSwitch(self.bgSub_frame, text='Enable background substraction', switch_width=50, command=self.toggle_bgSub, font=STANDARD_FONT, fg_color= VIOLET_DARK, progress_color= VIOLET_LIGHT, variable=self.bgSub_toggle_var) 
-        self.bgSub_toggle.grid (row=0, column = 0, pady= 10, padx = 10, columnspan=2, sticky='w')
+        # self.bgSub_toggle.grid (row=0, column = 0, pady= 10, padx = 10, columnspan=2, sticky='w')
+        self.bgSub_toggle.place (relx=.005, rely=.01 , relwidth=0.9, relheight=.05)
 
-        self.bgSub_label = ctk.CTkLabel (self.bgSub_frame, text= 'Select a background substraction method', font=STANDARD_FONT)
-        self.bgSub_label.grid (row=1, column=0, pady=10, padx=10, sticky='w')
+        self.bgSub_label = ctk.CTkLabel (self.bgSub_frame, text= 'Select background substraction method', font=("Calibri", 16))
+        # self.bgSub_label.grid (row=1, column=0, pady=10, padx=10, sticky='w')
+        self.bgSub_label.place (relx=.005, rely=.005 + .04 + 0.05 , relwidth=0.4, relheight=.08)
 
-        self.bgSub_combo = ctk.CTkComboBox (self.bgSub_frame, values=self.bg_substraction_methods, font=STANDARD_FONT, width=450, command=self.select_bgSubstractor, dropdown_font=STANDARD_FONT)
-        self.bgSub_combo.grid (row=1, column=1, padx=20, pady=10, sticky='e')
+        self.bgSub_combo = ctk.CTkComboBox (self.bgSub_frame, values=self.bg_substraction_methods, font=("Calibri", 16), width=450, command=self.select_bgSubstractor, dropdown_font=STANDARD_FONT)
+        # self.bgSub_combo.grid (row=1, column=1, padx=20, pady=10, sticky='e')
+        self.bgSub_combo.place (relx=.005 + 0.4 + .2, rely=.005 + .04 + 0.05 , relwidth=0.35, relheight=.08)
 
         self.bgSub_view = ctk.CTkLabel (self.bgSub_frame, text='', corner_radius=15) 
-        self.bgSub_view.grid (row=2, column = 1, pady= 10, padx = 5, sticky='news')
+        # self.bgSub_view.grid (row=2, column = 1, pady= 10, padx = 5, sticky='news')
+        self.bgSub_view.place (relx=.005 + 0.45 + 0.04, rely=.005 + .04 + 0.05 + .08 , relwidth=0.5, relheight=.7)
 
         # BG MOG PARAMETERS 
         self.MOG_params_frame = ctk.CTkFrame (self.bgSub_frame)
-        self.MOG_params_frame.grid (row=2, column = 0, pady= 10, padx = 5, sticky='news')
+        # self.MOG_params_frame.grid (row=2, column = 0, pady= 10, padx = 5, sticky='news')
+        self.MOG_params_frame.place (relx=.005, rely=.005 + .04 + 0.05 + .08 + .1, relwidth=0.45, relheight=.7)
 
-        self.MOG_params_frame.columnconfigure (0, weight=1)
-        self.MOG_params_frame.columnconfigure (1, weight=1)
-        self.MOG_params_frame.rowconfigure ((0, 1, 2), weight=1)
+        # self.MOG_params_frame.columnconfigure (0, weight=1)
+        # self.MOG_params_frame.columnconfigure (1, weight=1)
+        # self.MOG_params_frame.rowconfigure ((0, 1, 2), weight=1)
 
         history_label = ctk.CTkLabel (self.MOG_params_frame, text= "Number of history entries", font=STANDARD_FONT)
-        history_label.grid (row=0, column=0, padx=20, pady=5, sticky='w')
-        self.MOG_history_spinbox = IntSpinbox(self.MOG_params_frame, width=150, step_size=1, value=self.bgSub_history_states, button_color=VIOLET_DARK, button_hover_color=VIOLET_LIGHT, command=self.MOG_history_spinbox_callback)
-        self.MOG_history_spinbox.grid(row=0, column=1, padx=20, pady=5, sticky='ew')
+        # history_label.grid (row=0, column=0, padx=20, pady=5, sticky='w')
+        history_label.place (relx=.01, rely=.005, relwidth=0.6, relheight=.25, anchor='nw')
+
+        self.MOG_history_spinbox = IntSpinbox(self.MOG_params_frame, width=100, height = 22, step_size=1, value=self.bgSub_history_states, button_color=VIOLET_DARK, button_hover_color=VIOLET_LIGHT, command=self.MOG_history_spinbox_callback)
+        # self.MOG_history_spinbox.grid(row=0, column=1, padx=20, pady=5, sticky='ew')
+        self.MOG_history_spinbox.place (relx=.01 + .6 + .05 , rely=.005, relwidth=0.3, relheight=.25)
 
         nGaussian_mixtures = ctk.CTkLabel (self.MOG_params_frame, text= "Number of Gaussian mixtures", font=STANDARD_FONT)
-        nGaussian_mixtures.grid (row=1, column=0, padx=20, pady=5, sticky='w')
-        self.nGaussian_mixtures_spinbox = IntSpinbox(self.MOG_params_frame, width=150, step_size=1, value=self.bgSub_MOG_nGaussians, button_color=VIOLET_DARK, button_hover_color=VIOLET_LIGHT, command=self.nGaussians_spinbox_callback)
-        self.nGaussian_mixtures_spinbox.grid(row=1, column=1, padx=20, pady=5, sticky='ew')
+        # nGaussian_mixtures.grid (row=1, column=0, padx=20, pady=5, sticky='w')
+        nGaussian_mixtures.place (relx=.01, rely=.005 + .25 + .005, relwidth=0.6, relheight=.25, anchor='nw')
+
+        self.nGaussian_mixtures_spinbox = IntSpinbox(self.MOG_params_frame, width=100, height = 22, step_size=1, value=self.bgSub_MOG_nGaussians, button_color=VIOLET_DARK, button_hover_color=VIOLET_LIGHT, command=self.nGaussians_spinbox_callback)
+        # self.nGaussian_mixtures_spinbox.grid(row=1, column=1, padx=20, pady=5, sticky='ew')
+        self.nGaussian_mixtures_spinbox.place (relx=.01 + .6 + .05 , rely=.005 + .25 + .005, relwidth=0.3, relheight=.25)
 
         bgSub_bgRatio_label = ctk.CTkLabel (self.MOG_params_frame, text= "Background ratio", font=STANDARD_FONT)
-        bgSub_bgRatio_label.grid (row=2, column=0, padx=20, pady=5, sticky='w')
+        # bgSub_bgRatio_label.grid (row=2, column=0, padx=20, pady=5, sticky='w')
+        bgSub_bgRatio_label.place (relx=.01  , rely=.005 + .25 + .005 + .25 + .02, relwidth=0.5, relheight=.08, anchor='nw')
 
         self.bgSub_bgRatio_slider = ctk.CTkSlider(master=self.MOG_params_frame, from_=0, to=1, command= self.bgRatio_slider_callback, width = 150, button_color = '#FFFFFF', button_hover_color='#FFFFFF', progress_color= VIOLET_LIGHT) 
         self.bgSub_bgRatio_slider.set (self.bgSub_MOG_bgRatio)
-        self.bgSub_bgRatio_slider.grid (row=2, column = 1, padx=5, pady=5, sticky = 'ew')
+        # self.bgSub_bgRatio_slider.grid (row=2, column = 1, padx=5, pady=5, sticky = 'ew')
+        self.bgSub_bgRatio_slider.place (relx=.01 + .5 + .005 , rely=.005 + .25 + .005 + .25 + .025, relwidth=0.5, relheight=.06)
 
         # MOG2 PARAMETER FRAME 
         self.MOG2_params_frame = ctk.CTkFrame (self.bgSub_frame)
@@ -209,7 +228,8 @@ class TabView(ctk.CTkTabview):
 
         ## Model selection 
         self.model_select_frame = ctk.CTkFrame (self.detection_frame, fg_color='transparent', border_color="#454545", border_width=1)
-        self.model_select_frame.grid (row=2, column=0, columnspan=3, sticky='we', padx=30, pady=20)
+        # self.model_select_frame.grid (row=2, column=0, columnspan=3, sticky='we', padx=30, pady=20)
+        self.model_select_frame.place (relx=.05, rely=.005 + .06 + .05 + .5 + .005 , relwidth=0.9, relheight=.06)
 
         self.model_select_frame.columnconfigure (0, weight=1)
         self.model_select_frame.columnconfigure (1, weight=1)
@@ -223,7 +243,9 @@ class TabView(ctk.CTkTabview):
 
         ## Threshold adjusments
         self.threshold_frame = ctk.CTkFrame(self.detection_frame, bg_color = 'transparent', corner_radius = 20, border_color = "#3B3B3B", border_width= 1)
-        self.threshold_frame.grid(row=3, column=0, columnspan=3, pady=5, padx=30, ipady=10, sticky='ew')
+        # self.threshold_frame.grid(row=3, column=0, columnspan=3, pady=5, padx=30, ipady=10, sticky='ew')
+        self.threshold_frame.place (relx=.05, rely=.005 + .06 + .05 + .5 + .005 + .06 + 0.005 , relwidth=0.9, relheight=.08)
+
         self.threshold_frame.columnconfigure (0, weight=1)
         self.threshold_frame.rowconfigure (0, weight=1)
         self.threshold_frame.rowconfigure (1, weight=1)
@@ -240,13 +262,15 @@ class TabView(ctk.CTkTabview):
 
         ## Recording behavior
         self.recording_segmented_buttons = ctk.CTkSegmentedButton (self.detection_frame, selected_color=VIOLET_LIGHT, border_width=1, font=STANDARD_FONT, values=['Recording off', 'Continuous recording', 'Only on detection'], unselected_color="#333333", height=40, selected_hover_color=VIOLET_LIGHT, variable=self.recording_behavior)
-        self.recording_segmented_buttons.grid (row=4, column = 0, padx=30, pady=20, columnspan=3, sticky='nsew')
+        # self.recording_segmented_buttons.grid (row=4, column = 0, padx=30, pady=20, columnspan=3, sticky='nsew')
+        self.recording_segmented_buttons.place (relx=.05, rely=.005 + .06 + .05 + .5 + .005 +.06 + 0.005 + .08 + 0.005 , relwidth=0.9, relheight=.04)
 
         ## Storage folder chooser
-        self.folder_chooser_frame = ctk.CTkFrame(self.detection_frame, bg_color = 'transparent', corner_radius = 20, border_color = "#3B3B3B", border_width= 1, height=150)
+        self.folder_chooser_frame = ctk.CTkFrame(self.detection_frame, bg_color = 'transparent', corner_radius = 15, border_color = "#3B3B3B", border_width= 1, height=150)
         self.folder_chooser_frame.grid (row=5, column = 0, padx=30, pady=20, columnspan=3, sticky='nsew')
+        self.folder_chooser_frame.place (relx=.05, rely=.005 + .06 + .05 + .5 + .005 + .06 + 0.005 + .08 + 0.005 + .04 + 0.005 , relwidth=0.9, relheight=.08)
 
-        self.folder_chooser_button = ctk.CTkButton (self.folder_chooser_frame, text='Choose a storage directory', command=self.select_folder, font=STANDARD_FONT, width=130, height=40, corner_radius=20, border_color=VIOLET_DARK, hover_color=VIOLET_LIGHT,border_width=1, fg_color= VIOLET_DARK)
+        self.folder_chooser_button = ctk.CTkButton (self.folder_chooser_frame, text='Choose a storage directory', command=self.select_folder, font=STANDARD_FONT, width=130, height=40, corner_radius=15, border_color=VIOLET_DARK, hover_color=VIOLET_LIGHT,border_width=1, fg_color= VIOLET_DARK)
         self.folder_chooser_button.pack (side='left', pady=20, padx= 20)
 
         self.storage_path_label = ctk.CTkLabel (self.folder_chooser_frame, text=self.recording_storage_path, font=STANDARD_FONT)
@@ -503,8 +527,13 @@ class TabView(ctk.CTkTabview):
         ret, frame = self.input_vcap.read() 
         timestamp = datetime.datetime.now(tz=datetime.timezone.utc).strftime("%d-%m-%Y_%H-%M-%S_UTC")
         display_frame = None
+
+        cam_view_size = (int (self.cam_view.winfo_width () * 1), int (self.cam_view.winfo_height () * 1))
+        if cam_view_size[0] != 1 and cam_view_size[1] != 1:
+            cam_view_size = (int (self.cam_view.winfo_width () * .7), int (self.cam_view.winfo_height () * .7))
+        
         if ret:
-            frame = cv2.resize(frame, FRAME_SIZE) 
+            # frame = cv2.resize(frame, cam_view_size)
 
             if self.bgSub_toggle.get ():
                 fgMask = self.background_substractor.apply(frame)
@@ -531,7 +560,8 @@ class TabView(ctk.CTkTabview):
                     
             opencv_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) 
 
-            photo_image = ctk.CTkImage (dark_image=Image.fromarray(opencv_image) , size=FRAME_SIZE)
+            photo_image = ctk.CTkImage (dark_image=Image.fromarray(opencv_image), size=cam_view_size)
+
             self.cam_view.configure(image=photo_image) 
 
         elif display_frame == None or ret == False:
