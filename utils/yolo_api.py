@@ -19,6 +19,8 @@ def detect(frame, model, detection_threshold, rect_color):
             cv2.rectangle(frame, (x1, y1), (x2, y2), rect_color, 2)
             
     return people_found
+
+
     
 models = {'YOLOv9 Tiny': 'models\\yolov9t.pt', 'YOLOv10 Nano' : 'models\\yolov10n.pt', 'YOLOv10 Small' : 'models\\yolov10s.pt', 'YOLOv10 Medium' : 'models\\yolov10m.pt', 'YOLOv10 Big' : 'models\\yolov10b.pt', 'YOLOv10 Large' : 'models\\yolov10l.pt', 'YOLOv10 Extra Large' : 'models\\yolov10x.pt'}
 def load_model (model_name='YOLOv9 Tiny'):
